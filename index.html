@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>QuickChart</title>
+
+  <!-- Bootstrap 5 (CDN) -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+  />
+  <!-- SortableJS (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+
+  <style>
+    body {
+      padding: 1rem;
+    }
+
+    .dchart-section {
+      background-color: #f8f9fa;
+      padding: 1rem;
+      border-radius: 4px;
+      margin-bottom: 1rem;
+      position: relative;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      font-weight: bold;
+    }
+    .section-title {
+      margin: 0;
+    }
+
+    .sentence-list {
+      list-style: none;
+      padding-left: 0;
+      margin-bottom: 0;
+      min-height: 2rem; /* space to drop even if empty */
+    }
+
+    .sentence-list li {
+      background: #ffffff;
+      padding: 0.5rem 0.5rem 0.5rem 2rem; /* extra left padding for the handle */
+      margin-bottom: 0.5rem;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      position: relative;
+    }
+
+    /* Drag handle on the left side */
+    .drag-handle {
+      position: absolute;
+      left: 0.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: move;
+      font-size: 1.2rem;
+      user-select: none;
+    }
+
+    /* The red X button to remove a sentence */
+    .remove-sentence-btn {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      color: red;
+      font-size: 1.2rem;
+      font-weight: bold;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      outline: none;
+    }
+    .remove-sentence-btn:hover {
+      color: darkred;
+    }
+
+    .add-item-form {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+      align-items: center;
+    }
+    .add-item-form input[type="text"] {
+      flex: 1;
+    }
+
+    /* Make inline placeholders smaller */
+    .inline-field {
+      display: inline-block;
+      width: auto;
+      min-width: 50px;
+      margin: 0 3px;
+      vertical-align: baseline;
+      font-size: 1em;
+      border: none;
+      border-bottom: 1px dotted #777;
+      background-color: transparent;
+      padding: 0 2px;
+      outline: none;
+      text-align: left;
+    }
+    .inline-field::placeholder {
+      text-align: center;
+    }
+    .inline-field:focus {
+      border-bottom-color: #000;
+    }
+
+    /* Custom dropdown suggestions */
+    .custom-dropdown {
+      display: inline-block;
+      position: relative;
+    }
+    .suggestions {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      z-index: 999;
+      display: none;
+      margin-top: 4px;
+      width: 200px;
+      max-height: 200px;
+      overflow-y: auto;
+      background-color: #fff;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      padding: 0;
+      list-style: none;
+    }
+    .suggestions li {
+      padding: 0.5rem;
+      cursor: pointer;
+    }
+    .suggestions li:hover,
+    .suggestions li.highlight {
+      background-color: #e9ecef;
+    }
+
+    .highlight {
+      background-color: #007bff;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1 class="mb-4">QuickChart</h1>
+
+  <!-- Container for parts (D, C, H, A, R, T, M, Sign Off) -->
+  <div id="sectionContainer"></div>
+
+  <!-- Generate final text button -->
+  <button id="generateBtn" class="btn btn-primary mb-3">Generate Final Text</button>
+
+  <!-- Final text preview / copy area -->
+  <div class="mb-3">
+    <label class="form-label fw-bold">Final Narrative</label>
+    <textarea class="form-control" id="finalText" rows="4" readonly></textarea>
+  </div>
+
+  <!-- Copy button -->
+  <button id="copyBtn" class="btn btn-success mb-5">Copy to Clipboard</button>
+</div>
+
+<!-- Bootstrap 5 JS -->
+<script
+  src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+></script>
+
+<script>
+// Initialize globalSentenceID dynamically based on existing sentences
+let globalSentenceID = 1;
+
+// Example data structure with sentences up to sentence-17
+let dchartSections = [
+  {
+    part: "D",
+    sentences: [
+      {
+        id: "sentence-1",
+        text: "[customDropdown:Unit #:Medic 5, Medic 6] was to [customDropdown:Pickup Location:Baptist Floyd, Baptist Freestanding ER in Jeffersonville] for [number:Age]yo [customDropdown:Gender:Male, Female]."
+      },
+      {
+        id: "sentence-2",
+        text: "The response was [customDropdown:Response Type:Emergent,Non-Emergent]."
+      },
+      {
+        id: "sentence-3",
+        text: "Upon arrival, the patient’s condition was [text:Initial Condition]."
+      },
+      {
+        id: "sentence-4",
+        text: "No immediate intervention or additional resources were required."
+      }
+    ]
+  },
+  {
+    part: "C",
+    sentences: [
+      {
+        id: "sentence-5",
+        text: "The patient’s chief complaint is [text:Chief Complaint], which has been ongoing for [number:Duration] [customDropdown:Duration Units:Minutes, Hours, Days, Weeks, Years]."
+      },
+      {
+        id: "sentence-6",
+        text: "Pertinent negatives: [text:Pertinent Negatives]."
+      }
+    ]
+  },
+  {
+    part: "H",
+    sentences: [
+      {
+        id: "sentence-7",
+        text: "The patient was [customDropdown: :Hospitalized, Evaluated] for [text:Reason]."
+      },
+      {
+        id: "sentence-8",
+        text: "The patient’s medical history, medications, and allergies are detailed in the HPI. The OPQRST assessment, along with the SAMPLE history, is documented above."
+      },
+      {
+        id: "sentence-8.1",
+        text: "including [text:Pertinent Positive Findings]."
+      }
+    ]
+  },
+  {
+    part: "A",
+    sentences: [
+      {
+        id: "sentence-9",
+        text: "The patient’s mental status was assessed as [customDropdown:Mental Status:Alert and Oriented, Confused], with ABCs evaluated as [text:ABCs]."
+      },
+      {
+        id: "sentence-10",
+        text: "Primary assessment findings, documented in the treatment tab, revealed [customDropdown:Reassessment Status:No Changes,Improvement,Worsening]."
+      },
+      {
+        id: "sentence-10.1",
+        text: "Advanced Life Support (ALS) assessment was performed by [customDropDown:ALS Provider:G. Linker, Paramedic], while "
+      },
+      {
+        id: "sentence-10.2",
+        text: "Basic Life Support (BLS) assessments were conducted by [customDropdown:BLS Provider:B. Brown, EMT-B]."
+      }
+    ]
+  },
+  {
+    part: "R",
+    sentences: [
+      {
+        id: "sentence-11",
+        text: "The patient’s vital signs, along with any performed interventions, are detailed in the treatment section."
+      },
+      {
+        id: "sentence-12",
+        text: "Additional interventions were necessary to manage the patient’s condition due to [text:Additional Reason], and these included [text:Interventions]. The patient’s condition [customDropdown:Patient Condition:Improved,Unchanged,Worsened] during transport."
+      }
+    ]
+  },
+  {
+    part: "T",
+    sentences: [
+      {
+        id: "sentence-13",
+        text: "The patient was transferred to the stretcher with assistance [customDropdown:Assist Count:x1, x2], secured with [customDropdown:Straps Count:x5] straps, and loaded into [customDropdown:Unit #:Medic 5, Medic 6]."
+      },
+      {
+        id: "sentence-14",
+        text: "The patient was transported to [text:Receiving Facility] at [text:Arrival to Facility Time]. Upon arrival, the patient’s condition was [text:Arrival Condition]. The patient was transferred to [text:Transfer of Care] with assistance [customDropdown:Assist Count:x1, x2], without complications. A full report was provided to [text:Receiving Provider]."
+      }
+    ]
+  },
+  {
+    part: "M",
+    sentences: [
+      {
+        id: "sentence-15",
+        text: "The medical necessity for ambulance transport was justified because [customDropdown:Reason for Ambulance:patient was bed confined before and anfter transport, patient required monitoring of vitals during transport, patient was confused, patient was danger to self or others, patient required assistance in administration of oxygen, patient was unable to maintain seated position]."
+      },
+      {
+        id: "sentence-16",
+        text: "The patient was taken to [text:Destination] due to the need for [customDropdown:Reason:higher level of care, long term care] that [customDropdown:Sending Facility:Baptist Floyd, Baptist Freestanding ER in Jeffersonville] was unable to provide."
+      }
+    ]
+  },
+  {
+    part: "Sign Off",
+    sentences: [
+      {
+        id: "sentence-17",
+        text: "I, B. Brown, EMT-B (PSID: 5736-4360), hereby certify that the above findings are accurate and complete to the best of my knowledge."
+      }
+    ]
+  }
+];
+
+// Regex for placeholders
+const placeholderRegex = /\[(text|number|dropdown|customDropdown):([^:\]]+)(?::([^:\]]+))?\]/g;
+
+/**
+ * Initialize globalSentenceID based on existing sentences
+ */
+function initializeGlobalID() {
+  let maxID = 0;
+  dchartSections.forEach(section => {
+    section.sentences.forEach(sentence => {
+      const num = parseInt(sentence.id.split('-')[1], 10);
+      if (num > maxID) maxID = num;
+    });
+  });
+  globalSentenceID = maxID + 1;
+  console.log(`Initialized globalSentenceID to ${globalSentenceID}`);
+}
+
+/** 
+ * Rebuilds the UI from dchartSections.
+ */
+function buildSections() {
+  const container = document.getElementById("sectionContainer");
+  container.innerHTML = "";
+
+  // For each part
+  dchartSections.forEach((secObj) => {
+    const sectionDiv = document.createElement("div");
+    sectionDiv.classList.add("dchart-section");
+    sectionDiv.dataset.part = secObj.part;
+
+    // Section header
+    const header = document.createElement("div");
+    header.classList.add("section-header");
+    const titleEl = document.createElement("h5");
+    titleEl.classList.add("section-title");
+    titleEl.innerText = secObj.part;
+    header.appendChild(titleEl);
+    sectionDiv.appendChild(header);
+
+    // Sentence list
+    const ul = document.createElement("ul");
+    ul.classList.add("sentence-list");
+    ul.dataset.part = secObj.part;
+
+    secObj.sentences.forEach((sentenceObj) => {
+      const li = document.createElement("li");
+      li.dataset.id = sentenceObj.id; 
+      // Build the UI from sentenceObj.text
+
+      // Create a drag handle
+      const handle = document.createElement("span");
+      handle.classList.add("drag-handle");
+      handle.innerHTML = "&#9776;"; // drag icon
+      li.appendChild(handle);
+
+      // Insert placeholders / inline fields
+      const contentWrapper = document.createElement("span");
+      contentWrapper.innerHTML = buildInlineFields(sentenceObj.text);
+      li.appendChild(contentWrapper);
+
+      // Red X remove button
+      const removeBtn = document.createElement("button");
+      removeBtn.classList.add("remove-sentence-btn");
+      removeBtn.type = "button";
+      removeBtn.innerHTML = "&times;";
+      removeBtn.title = "Remove this sentence";
+      removeBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (confirm("Remove this sentence?")) {
+          removeSentence(secObj.part, sentenceObj.id);
+          buildSections();
+        }
+      });
+      li.appendChild(removeBtn);
+
+      ul.appendChild(li);
+    });
+
+    sectionDiv.appendChild(ul);
+
+    // "Add item" form
+    const form = document.createElement("form");
+    form.classList.add("add-item-form");
+    const input = document.createElement("input");
+    input.type = "text";
+    input.classList.add("form-control", "form-control-sm");
+    input.placeholder = "New sentence...";
+    const addBtn = document.createElement("button");
+    addBtn.type = "submit";
+    addBtn.classList.add("btn", "btn-sm", "btn-secondary");
+    addBtn.innerText = "Add";
+
+    form.appendChild(input);
+    form.appendChild(addBtn);
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const newText = input.value.trim();
+      if (newText) {
+        // Create a new sentence object with a new ID
+        const newID = "sentence-" + (globalSentenceID++);
+        console.log(`Adding new sentence with ID: ${newID}`);
+        secObj.sentences.push({ id: newID, text: newText });
+        buildSections();
+      }
+    });
+
+    sectionDiv.appendChild(form);
+
+    container.appendChild(sectionDiv);
+  });
+
+  makeSentencesDraggable();
+  attachDropdownLogic(); // Re-attach dropdown logic after rebuilding
+}
+
+/** Removes the sentence with the given ID from the given part. */
+function removeSentence(partLabel, sentenceId) {
+  const section = dchartSections.find(s => s.part === partLabel);
+  if (!section) {
+    console.error(`Section "${partLabel}" not found.`);
+    return;
+  }
+  const idx = section.sentences.findIndex(s => s.id === sentenceId);
+  if (idx === -1) {
+    console.error(`Sentence ID "${sentenceId}" not found in section "${partLabel}".`);
+    return;
+  }
+  console.log(`Removing sentence ID: ${sentenceId} from section: ${partLabel}`);
+  section.sentences.splice(idx, 1);
+}
+
+/** Renders placeholders (text, customDropdown, etc.) as inline fields. */
+function buildInlineFields(sentence) {
+  const noBr = sentence.replace(/<br\s*\/?>/gi, "");
+  return noBr.replace(placeholderRegex, (match, type, label, options) => {
+    const optsArray = options ? options.split(",").map(x => x.trim()) : [];
+    if (type === "customDropdown") {
+      const listItems = optsArray.map(opt => `<li class="list-group-item">${opt}</li>`).join("");
+      return `
+        <div class="custom-dropdown">
+          <input
+            type="text"
+            class="inline-field custom-dropdown-input"
+            data-type="customDropdown"
+            data-label="${label}"
+            placeholder="${label}"
+          />
+          <ul class="suggestions">
+            ${listItems}
+          </ul>
+        </div>
+      `;
+    }
+    else if (type === "dropdown") {
+      const dlId = "dl-" + Math.random().toString(36).substring(2);
+      let dataListHTML = `<datalist id="${dlId}">`;
+      optsArray.forEach(opt => {
+        dataListHTML += `<option value="${opt}"></option>`;
+      });
+      dataListHTML += `</datalist>`;
+      return `
+        <span style="white-space:nowrap;">
+          <input
+            type="text"
+            list="${dlId}"
+            class="inline-field"
+            data-type="dropdown"
+            data-label="${label}"
+            placeholder="${label}"
+          />
+          ${dataListHTML}
+        </span>
+      `;
+    }
+    else if (type === "text") {
+      return `<input type="text" class="inline-field" data-type="text" data-label="${label}" placeholder="${label}" />`;
+    }
+    else if (type === "number") {
+      return `<input type="number" class="inline-field" data-type="number" data-label="${label}" placeholder="${label}" />`;
+    }
+    return match; 
+  });
+}
+
+/** Make sentences reorderable (including cross-group dragging). */
+function makeSentencesDraggable() {
+  const lists = document.querySelectorAll(".sentence-list");
+  lists.forEach(ul => {
+    new Sortable(ul, {
+      animation: 150,
+      group: { name: "dchartGroup", pull: true, put: true },
+      // <-- Only allow dragging by the handle:
+      handle: ".drag-handle",
+      onEnd: (evt) => {
+        const oldUl = evt.from; 
+        const newUl = evt.to; 
+        const oldPart = oldUl.dataset.part;
+        const newPart = newUl.dataset.part;
+        console.log(`Moved sentence from "${oldPart}" to "${newPart}"`);
+
+        // Rebuild old part's sentences from the DOM
+        const oldSec = dchartSections.find(s => s.part === oldPart);
+        if (oldSec) {
+          oldSec.sentences = readSentenceList(oldUl);
+          console.log(`Updated sentences in "${oldPart}":`, oldSec.sentences.map(s => s.id));
+        }
+
+        // Rebuild new part's sentences from the DOM
+        const newSec = dchartSections.find(s => s.part === newPart);
+        if (newSec) {
+          newSec.sentences = readSentenceList(newUl);
+          console.log(`Updated sentences in "${newPart}":`, newSec.sentences.map(s => s.id));
+        }
+      }
+    });
+  });
+  attachDropdownLogic();
+}
+
+/** Convert the <li> elements back into an array of {id, text} by reading data-id. */
+function readSentenceList(ul) {
+  const liArray = Array.from(ul.querySelectorAll("li"));
+  const out = [];
+  liArray.forEach(li => {
+    const id = li.dataset.id;
+    if (!id) {
+      console.warn("Found <li> without data-id:", li);
+      return;
+    }
+    // Look up the corresponding text from the data structure
+    const found = findSentenceById(id);
+    if (found) out.push(found);
+    else console.warn(`Sentence with ID "${id}" not found.`);
+  });
+  return out;
+}
+
+/** Finds a sentence object by ID in all sections. */
+function findSentenceById(id) {
+  for (const sec of dchartSections) {
+    const s = sec.sentences.find(x => x.id === id);
+    if (s) return s;
+  }
+  return null;
+}
+
+/** Initialize custom dropdown logic (arrow keys, etc.). */
+function attachDropdownLogic() {
+  document.querySelectorAll(".custom-dropdown").forEach((dropdown) => {
+    const input = dropdown.querySelector(".custom-dropdown-input");
+    const suggestionBox = dropdown.querySelector(".suggestions");
+    if (!input || !suggestionBox) return;
+
+    let focusedIndex = -1;
+    const items = Array.from(suggestionBox.querySelectorAll("li"));
+
+    input.addEventListener("focus", () => {
+      suggestionBox.style.display = "block";
+    });
+    input.addEventListener("blur", () => {
+      setTimeout(() => {
+        suggestionBox.style.display = "none";
+        clearHighlight();
+      }, 150);
+    });
+    items.forEach((li, idx) => {
+      li.addEventListener("mousedown", () => {
+        input.value = li.textContent.trim();
+      });
+    });
+    input.addEventListener("keydown", (e) => {
+      switch (e.keyCode) {
+        case 38: // up
+          e.preventDefault();
+          if (focusedIndex > 0) focusedIndex--;
+          else focusedIndex = items.length - 1;
+          highlight(focusedIndex);
+          break;
+        case 40: // down
+          e.preventDefault();
+          if (focusedIndex < items.length - 1) focusedIndex++;
+          else focusedIndex = 0;
+          highlight(focusedIndex);
+          break;
+        case 13: // enter
+          e.preventDefault();
+          if (focusedIndex >= 0 && focusedIndex < items.length) {
+            input.value = items[focusedIndex].textContent.trim();
+          }
+          suggestionBox.style.display = "none";
+          input.blur();
+          break;
+        case 27: // esc
+          e.preventDefault();
+          suggestionBox.style.display = "none";
+          clearHighlight();
+          break;
+      }
+    });
+
+    function highlight(index) {
+      items.forEach(item => item.classList.remove("highlight"));
+      if (index >= 0 && index < items.length) {
+        items[index].classList.add("highlight");
+      }
+    }
+    function clearHighlight() {
+      focusedIndex = -1;
+      items.forEach(item => item.classList.remove("highlight"));
+    }
+  });
+}
+
+/** Generate final text by reading each part's sentences in DOM order
+ *  and substituting placeholders with the UI's .inline-field values.
+ */
+document.getElementById("generateBtn").addEventListener("click", () => {
+  const finalText = generateFinalText();
+  document.getElementById("finalText").value = finalText;
+});
+
+function generateFinalText() {
+  let output = "";
+  const container = document.getElementById("sectionContainer");
+  const partDivs = Array.from(container.querySelectorAll(".dchart-section"));
+
+  // For each part in DOM order
+  partDivs.forEach(div => {
+    const partLabel = div.dataset.part;
+    const ul = div.querySelector(".sentence-list");
+    // for each li in the DOM order
+    const liArray = Array.from(ul.querySelectorAll("li"));
+    liArray.forEach(li => {
+      const sentenceId = li.dataset.id;
+      // find the sentence object in the data structure
+      const sentenceObj = findSentenceById(sentenceId);
+      if (!sentenceObj) {
+        console.warn(`Sentence with ID "${sentenceId}" not found.`);
+        return;
+      }
+
+      // We'll do a placeholder replacement for sentenceObj.text
+      // in the same order as the .inline-field elements
+      const fields = li.querySelectorAll(".inline-field");
+      let idx = 0;
+      let replaced = sentenceObj.text.replace(placeholderRegex, () => {
+        const fieldEl = fields[idx++];
+        if (!fieldEl) {
+          console.warn(`No input field found for placeholder in sentence ID "${sentenceId}".`);
+          return "";
+        }
+        return fieldEl.value.trim();
+      });
+      replaced = replaced.replace(/<br\s*\/?>/gi, "");
+      if (replaced) {
+        output += replaced + " ";
+      }
+    });
+    output += "\n";
+  });
+  return output.trim();
+}
+
+/** Copy final text to clipboard. */
+document.getElementById("copyBtn").addEventListener("click", () => {
+  const finalTextArea = document.getElementById("finalText");
+  if (!finalTextArea.value) {
+    alert("Nothing to copy! Generate the text first.");
+    return;
+  }
+  navigator.clipboard.writeText(finalTextArea.value)
+    .then(() => {
+      alert("Copied to clipboard!");
+    })
+    .catch((err) => {
+      console.error("Could not copy text: ", err);
+      alert("Failed to copy text.");
+    });
+});
+
+// Initialize the application once the DOM is fully loaded
+document.addEventListener("DOMContentLoaded", () => {
+  initializeGlobalID();
+  buildSections();
+});
+</script>
+</body>
+</html>
