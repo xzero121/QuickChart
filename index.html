@@ -775,7 +775,7 @@ function generateFinalText() {
       let replaced = sentenceObj.text.replace(placeholderRegex, () => {
         const val = sentenceObj.values && sentenceObj.values[placeholderIndex]
           ? sentenceObj.values[placeholderIndex].trim()
-          : "";
+          : "_";
         placeholderIndex++;
         return val;
       });
