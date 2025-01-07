@@ -313,7 +313,7 @@ let dchartSections = [
   }
 ];
 
-// Regex for placeholders
+// We'll store user-entered values in each sentenceObj as an array of values in the same order as the placeholders.
 const placeholderRegex = /\[(text|number|dropdown|customDropdown):([^:\]]+)(?::([^:\]]+))?\]/g;
 
 /**
@@ -331,10 +331,33 @@ function initializeGlobalID() {
   console.log(`Initialized globalSentenceID to ${globalSentenceID}`);
 }
 
+/**
+ * Store all current inline-field values from the DOM back into the data structure
+ * before we rebuild (so we don't lose them).
+ */
+function storeAllInlineValues() {
+  dchartSections.forEach(section => {
+    section.sentences.forEach(sentenceObj => {
+      const li = document.querySelector(`li[data-id="${sentenceObj.id}"]`);
+      if (!li) return;
+      const fields = Array.from(li.querySelectorAll(".inline-field"));
+      if (!sentenceObj.values) {
+        sentenceObj.values = [];
+      }
+      fields.forEach((field, idx) => {
+        sentenceObj.values[idx] = field.value;
+      });
+    });
+  });
+}
+
 /** 
  * Rebuilds the UI from dchartSections.
  */
 function buildSections() {
+  // First, store everything the user typed so far
+  storeAllInlineValues();
+
   const container = document.getElementById("sectionContainer");
   container.innerHTML = "";
 
@@ -361,7 +384,6 @@ function buildSections() {
     secObj.sentences.forEach((sentenceObj) => {
       const li = document.createElement("li");
       li.dataset.id = sentenceObj.id; 
-      // Build the UI from sentenceObj.text
 
       // Create a drag handle
       const handle = document.createElement("span");
@@ -371,7 +393,7 @@ function buildSections() {
 
       // Insert placeholders / inline fields
       const contentWrapper = document.createElement("span");
-      contentWrapper.innerHTML = buildInlineFields(sentenceObj.text);
+      contentWrapper.innerHTML = buildInlineFields(sentenceObj);
       li.appendChild(contentWrapper);
 
       // Red X remove button
@@ -413,7 +435,6 @@ function buildSections() {
       e.preventDefault();
       const newText = input.value.trim();
       if (newText) {
-        // Create a new sentence object with a new ID
         const newID = "sentence-" + (globalSentenceID++);
         console.log(`Adding new sentence with ID: ${newID}`);
         secObj.sentences.push({ id: newID, text: newText });
@@ -427,7 +448,7 @@ function buildSections() {
   });
 
   makeSentencesDraggable();
-  attachDropdownLogic(); // Re-attach dropdown logic after rebuilding
+  attachDropdownLogic(); 
 }
 
 /** Removes the sentence with the given ID from the given part. */
@@ -447,10 +468,16 @@ function removeSentence(partLabel, sentenceId) {
 }
 
 /** Renders placeholders (text, customDropdown, etc.) as inline fields. */
-function buildInlineFields(sentence) {
-  const noBr = sentence.replace(/<br\s*\/?>/gi, "");
+function buildInlineFields(sentenceObj) {
+  let placeholderIndex = 0;
+  const noBr = sentenceObj.text.replace(/<br\s*\/?>/gi, "");
+
   return noBr.replace(placeholderRegex, (match, type, label, options) => {
+    const val = (sentenceObj.values && sentenceObj.values[placeholderIndex]) || "";
+    placeholderIndex++;
+
     const optsArray = options ? options.split(",").map(x => x.trim()) : [];
+
     if (type === "customDropdown") {
       const listItems = optsArray.map(opt => `<li class="list-group-item">${opt}</li>`).join("");
       return `
@@ -461,6 +488,7 @@ function buildInlineFields(sentence) {
             data-type="customDropdown"
             data-label="${label}"
             placeholder="${label}"
+            value="${val}"
           />
           <ul class="suggestions">
             ${listItems}
@@ -484,16 +512,35 @@ function buildInlineFields(sentence) {
             data-type="dropdown"
             data-label="${label}"
             placeholder="${label}"
+            value="${val}"
           />
           ${dataListHTML}
         </span>
       `;
     }
     else if (type === "text") {
-      return `<input type="text" class="inline-field" data-type="text" data-label="${label}" placeholder="${label}" />`;
+      return `
+        <input
+          type="text"
+          class="inline-field"
+          data-type="text"
+          data-label="${label}"
+          placeholder="${label}"
+          value="${val}"
+        />
+      `;
     }
     else if (type === "number") {
-      return `<input type="number" class="inline-field" data-type="number" data-label="${label}" placeholder="${label}" />`;
+      return `
+        <input
+          type="number"
+          class="inline-field"
+          data-type="number"
+          data-label="${label}"
+          placeholder="${label}"
+          value="${val}"
+        />
+      `;
     }
     return match; 
   });
@@ -506,7 +553,6 @@ function makeSentencesDraggable() {
     new Sortable(ul, {
       animation: 150,
       group: { name: "dchartGroup", pull: true, put: true },
-      // <-- Only allow dragging by the handle:
       handle: ".drag-handle",
       onEnd: (evt) => {
         const oldUl = evt.from; 
@@ -544,7 +590,6 @@ function readSentenceList(ul) {
       console.warn("Found <li> without data-id:", li);
       return;
     }
-    // Look up the corresponding text from the data structure
     const found = findSentenceById(id);
     if (found) out.push(found);
     else console.warn(`Sentence with ID "${id}" not found.`);
@@ -637,6 +682,9 @@ document.getElementById("generateBtn").addEventListener("click", () => {
 });
 
 function generateFinalText() {
+  // Ensure we store the latest typed values
+  storeAllInlineValues();
+  
   let output = "";
   const container = document.getElementById("sectionContainer");
   const partDivs = Array.from(container.querySelectorAll(".dchart-section"));
@@ -656,17 +704,14 @@ function generateFinalText() {
         return;
       }
 
-      // We'll do a placeholder replacement for sentenceObj.text
-      // in the same order as the .inline-field elements
-      const fields = li.querySelectorAll(".inline-field");
-      let idx = 0;
+      // Rebuild text from placeholders in the same order as sentenceObj.values
+      let placeholderIndex = 0;
       let replaced = sentenceObj.text.replace(placeholderRegex, () => {
-        const fieldEl = fields[idx++];
-        if (!fieldEl) {
-          console.warn(`No input field found for placeholder in sentence ID "${sentenceId}".`);
-          return "";
-        }
-        return fieldEl.value.trim();
+        const val = sentenceObj.values && sentenceObj.values[placeholderIndex]
+          ? sentenceObj.values[placeholderIndex].trim()
+          : "";
+        placeholderIndex++;
+        return val;
       });
       replaced = replaced.replace(/<br\s*\/?>/gi, "");
       if (replaced) {
