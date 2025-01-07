@@ -45,7 +45,7 @@
 
     .sentence-list li {
       background: #ffffff;
-      padding: 0.5rem 0.5rem 0.5rem 2rem; /* extra left padding for the handle */
+      padding: 0.5rem 0.5rem 0.5rem 2rem;
       margin-bottom: 0.5rem;
       border: 1px solid #dee2e6;
       border-radius: 4px;
@@ -205,15 +205,34 @@ const globalDropdownOptions = {
   "Transfer of Location": ["hospital bed"],
   "Sending Facility": ["Baptist Floyd", "Baptist Freestanding ER in Jeffersonville"],
   "Reason": ["higher level of care", "long term care"],
-  "Medical Necessity": ["1: Patient was bed confined before and after transport", "2: Patient required Cardiac / Hemodynamic monitoring during transport", "3: Patient is confused, combatative, lethargic, or comatose", "4: Patient has contractures", "5: Patient is a danger to self or others - requires monitoring", "6: Patient has DVT required elevation of lower extremity", "7: Patient requires IV Medications / Fluids during transport", "8: Patient has moderate to severe pain upon movement", "9: Patient is morbidly obese and requires additional personnel / equipment", "10: Patient has non healing fractures", "11: Patient requires orthopedic device requiring special handling in transit", "12: Patient requires or medical provider anticapates restraints (Physical or Chemical)", "13: Patient has a risk of falling off wheelchair or stretcher while in motion","14: Patient has severe muscular weakness", "15: Patient requires special handling en route - Isolation", "16: Patient requires assistance for administration / regulation of oxygen", "17: Patient is unable to maintain seated position for time needed to transport", "18: Patient is unable to sit in chair or wheelchair due to decubitus ulcer", "19: Patient requires transfer for higher level of care; First hospital lacks equipment / sercives"]
+  "Medical Necessity": [
+    "1: Patient was bed confined before and after transport",
+    "2: Patient required Cardiac / Hemodynamic monitoring during transport",
+    "3: Patient is confused, combatative, lethargic, or comatose",
+    "4: Patient has contractures",
+    "5: Patient is a danger to self or others - requires monitoring",
+    "6: Patient has DVT required elevation of lower extremity",
+    "7: Patient requires IV Medications / Fluids during transport",
+    "8: Patient has moderate to severe pain upon movement",
+    "9: Patient is morbidly obese and requires additional personnel / equipment",
+    "10: Patient has non healing fractures",
+    "11: Patient requires orthopedic device requiring special handling in transit",
+    "12: Patient requires or medical provider anticapates restraints (Physical or Chemical)",
+    "13: Patient has a risk of falling off wheelchair or stretcher while in motion",
+    "14: Patient has severe muscular weakness",
+    "15: Patient requires special handling en route - Isolation",
+    "16: Patient requires assistance for administration / regulation of oxygen",
+    "17: Patient is unable to maintain seated position for time needed to transport",
+    "18: Patient is unable to sit in chair or wheelchair due to decubitus ulcer",
+    "19: Patient requires transfer for higher level of care; First hospital lacks equipment / sercives"
+  ]
 };
-
-// Initialize globalSentenceID dynamically based on existing sentences
-let globalSentenceID = 1;
 
 /*
   Updated data structure with a boolean flag `includeTitle` for each section
   to control whether its title should be included in the final output.
+
+  We omit all explicit 'id' fields and generate them dynamically.
 */
 let dchartSections = [
   {
@@ -221,19 +240,15 @@ let dchartSections = [
     includeTitle: true,
     sentences: [
       {
-        id: "sentence-1",
         text: "[customDropdown:Unit #] was dispatched to [customDropdown:Sending Facility] for [number:Age]yo [customDropdown:Gender]."
       },
       {
-        id: "sentence-2",
         text: "The response was [customDropdown:Response Type]."
       },
       {
-        id: "sentence-3",
         text: "Upon arrival, the patient’s condition was [text:Initial Condition]."
       },
       {
-        id: "sentence-4",
         text: "No immediate intervention or additional resources were required."
       }
     ]
@@ -243,7 +258,6 @@ let dchartSections = [
     includeTitle: true,
     sentences: [
       {
-        id: "sentence-5",
         text: "The patient’s chief complaint is [text:Chief Complaint], which has been ongoing for [number:Duration] [customDropdown:Duration Units:Minutes, Hours, Days, Weeks, Years]."
       }
     ]
@@ -253,15 +267,12 @@ let dchartSections = [
     includeTitle: true,
     sentences: [
       {
-        id: "sentence-7",
-        text: "The patient was [customDropdown:Hospitalized / Evaluated] for [text:Reason]."
+        text: "The patient was recently [customDropdown:Hospitalized / Evaluated] for [text:Reason]."
       },
       {
-        id: "sentence-8",
         text: "The patient’s medical history, medications, and allergies are detailed in the HPI. The OPQRST assessment, along with the SAMPLE history, is documented above."
       },
       {
-        id: "sentence-8.1",
         text: "Including [text:Pertinent Positive Findings]."
       }
     ]
@@ -271,19 +282,15 @@ let dchartSections = [
     includeTitle: true,
     sentences: [
       {
-        id: "sentence-9",
         text: "The patient’s mental status was assessed as [customDropdown:Mental Status], with ABCs evaluated as [text:ABCs]."
       },
       {
-        id: "sentence-10",
         text: "Primary assessment findings, documented in the treatment tab, revealed [text:Assessment Status]."
       },
       {
-        id: "sentence-10.1",
         text: "Advanced Life Support (ALS) assessment was performed by [text:Provider]."
       },
       {
-        id: "sentence-10.2",
         text: "Basic Life Support (BLS) assessments were conducted by [text:Provider]."
       }
     ]
@@ -293,15 +300,12 @@ let dchartSections = [
     includeTitle: true,
     sentences: [
       {
-        id: "sentence-11",
         text: "The patient’s vital signs, along with any performed interventions, are detailed in the treatment section."
       },
       {
-        id: "sentence-12",
         text: "Additional interventions were necessary to manage the patient’s condition due to [text:Additional Reason], and these included [text:Interventions]."
       },
       {
-        id: "sentence-12.1",
         text: "The patient’s condition [customDropdown:Patient Condition] during transport.."
       }
     ]
@@ -311,23 +315,18 @@ let dchartSections = [
     includeTitle: true,
     sentences: [
       {
-        id: "sentence-13",
         text: "The patient was transferred to the stretcher via [customDropdown:Method] with assistance [customDropdown:Assist Count], secured with [customDropdown:Straps Count] straps, and loaded into [customDropdown:Unit #], without complications."
       },
       {
-        id: "sentence-14",
         text: "The patient was transported to [text:Receiving Facility]."
-      },      
+      },
       {
-        id: "sentence-141",
         text: "Upon arrival, the patient’s condition was [text:Arrival Condition]."
-      }, 
+      },
       {
-        id: "sentence-14.2",
         text: "The patient was transferred to [customDropdown:Transfer of Location] via [customDropdown:Method] with assistance [customDropdown:Assist Count], without complications."
       },
       {
-        id: "sentence-14.3",
         text: "A full report was provided to [text:Receiving Provider]."
       }
     ]
@@ -337,11 +336,9 @@ let dchartSections = [
     includeTitle: true,
     sentences: [
       {
-        id: "sentence-15",
         text: "The medical necessity for ambulance transport was justified because [customDropdown:Medical Necessity]."
       },
       {
-        id: "sentence-16",
         text: "The patient was taken to [text:Destination] due to the need for [customDropdown:Reason] that [customDropdown:Sending Facility] was unable to provide."
       }
     ]
@@ -351,34 +348,31 @@ let dchartSections = [
     includeTitle: false,
     sentences: [
       {
-        id: "sentence-17",
         text: "I, [text:Provider], hereby certify that the above findings are accurate and complete to the best of my knowledge."
       }
     ]
   }
 ];
 
-// We'll store user-entered values in each sentenceObj as an array of values in the same order as the placeholders.
+// Regex for placeholders
 const placeholderRegex = /\[(text|number|dropdown|customDropdown):([^:\]]+)(?::([^:\]]+))?\]/g;
 
 /**
- * Initialize globalSentenceID based on existing sentences
+ * Always reassign fresh IDs to each sentence in ascending order. This ensures
+ * newly added sentences appear in the final narrative with correct IDs.
  */
-function initializeGlobalID() {
-  let maxID = 0;
+function assignDynamicIDs() {
+  let counter = 1;
   dchartSections.forEach(section => {
-    section.sentences.forEach(sentence => {
-      const num = parseInt(sentence.id.split('-')[1], 10);
-      if (num > maxID) maxID = num;
+    section.sentences.forEach(sentenceObj => {
+      sentenceObj.id = "sentence-" + counter++;
     });
   });
-  globalSentenceID = maxID + 1;
-  console.log(`Initialized globalSentenceID to ${globalSentenceID}`);
 }
 
 /**
  * Store all current inline-field values from the DOM back into the data structure
- * before we rebuild (so we don't lose them).
+ * before we rebuild the interface, so we don't lose what's been typed.
  */
 function storeAllInlineValues() {
   dchartSections.forEach(section => {
@@ -397,11 +391,14 @@ function storeAllInlineValues() {
 }
 
 /** 
- * Rebuilds the UI from dchartSections.
+ * Build the UI from the dchartSections data structure.
  */
 function buildSections() {
-  // First, store everything the user typed so far
+  // First, store what's typed so far
   storeAllInlineValues();
+
+  // Reassign IDs so new sentences definitely have valid unique IDs
+  assignDynamicIDs();
 
   const container = document.getElementById("sectionContainer");
   container.innerHTML = "";
@@ -430,10 +427,10 @@ function buildSections() {
       const li = document.createElement("li");
       li.dataset.id = sentenceObj.id; 
 
-      // Create a drag handle
+      // Drag handle
       const handle = document.createElement("span");
       handle.classList.add("drag-handle");
-      handle.innerHTML = "&#9776;"; // drag icon
+      handle.innerHTML = "&#9776;";
       li.appendChild(handle);
 
       // Insert placeholders / inline fields
@@ -441,7 +438,7 @@ function buildSections() {
       contentWrapper.innerHTML = buildInlineFields(sentenceObj);
       li.appendChild(contentWrapper);
 
-      // Red X remove button
+      // Remove button
       const removeBtn = document.createElement("button");
       removeBtn.classList.add("remove-sentence-btn");
       removeBtn.type = "button";
@@ -480,9 +477,7 @@ function buildSections() {
       e.preventDefault();
       const newText = input.value.trim();
       if (newText) {
-        const newID = "sentence-" + (globalSentenceID++);
-        console.log(`Adding new sentence with ID: ${newID}`);
-        secObj.sentences.push({ id: newID, text: newText });
+        secObj.sentences.push({ text: newText });
         buildSections();
       }
     });
@@ -508,7 +503,6 @@ function removeSentence(partLabel, sentenceId) {
     console.error(`Sentence ID "${sentenceId}" not found in section "${partLabel}".`);
     return;
   }
-  console.log(`Removing sentence ID: ${sentenceId} from section: ${partLabel}`);
   section.sentences.splice(idx, 1);
 }
 
@@ -530,7 +524,9 @@ function buildInlineFields(sentenceObj) {
     }
 
     if (type === "customDropdown") {
-      const listItems = optsArray.map(opt => `<li class="list-group-item">${opt}</li>`).join("");
+      const listItems = optsArray
+        .map(opt => `<li class="list-group-item">${opt}</li>`)
+        .join("");
       return `
         <div class="custom-dropdown">
           <input
@@ -614,20 +610,15 @@ function makeSentencesDraggable() {
         const newUl = evt.to; 
         const oldPart = oldUl.dataset.part;
         const newPart = newUl.dataset.part;
-        console.log(`Moved sentence from "${oldPart}" to "${newPart}"`);
-
-        // Rebuild old part's sentences from the DOM
+        // Rebuild old part's sentences
         const oldSec = dchartSections.find(s => s.part === oldPart);
         if (oldSec) {
           oldSec.sentences = readSentenceList(oldUl);
-          console.log(`Updated sentences in "${oldPart}":`, oldSec.sentences.map(s => s.id));
         }
-
-        // Rebuild new part's sentences from the DOM
+        // Rebuild new part's sentences
         const newSec = dchartSections.find(s => s.part === newPart);
         if (newSec) {
           newSec.sentences = readSentenceList(newUl);
-          console.log(`Updated sentences in "${newPart}":`, newSec.sentences.map(s => s.id));
         }
       }
     });
@@ -646,8 +637,11 @@ function readSentenceList(ul) {
       return;
     }
     const found = findSentenceById(id);
-    if (found) out.push(found);
-    else console.warn(`Sentence with ID "${id}" not found.`);
+    if (found) {
+      out.push(found);
+    } else {
+      console.warn(`Sentence with ID "${id}" not found.`);
+    }
   });
   return out;
 }
@@ -733,38 +727,36 @@ function attachDropdownLogic() {
  */
 document.getElementById("generateBtn").addEventListener("click", () => {
   const finalText = generateFinalText();
-  // if finaltext area is not blank display a warning with the option to override, else populate the final text area
-  if (document.getElementById("finalText").value) {
+  // If final text area has content, confirm override
+  const finalTextArea = document.getElementById("finalText");
+  if (finalTextArea.value.trim()) {
     if (confirm("This will override the current final narrative. Continue?")) {
-      document.getElementById("finalText").value = finalText;
+      finalTextArea.value = finalText;
     }
   } else {
-    document.getElementById("finalText").value = finalText;
+    finalTextArea.value = finalText;
   }
 });
 
 function generateFinalText() {
-  // Ensure we store the latest typed values
+  // Ensure we store what's typed in the placeholders
   storeAllInlineValues();
 
   const includeSectionTitles = document.getElementById("toggleSectionTitles").checked;
-  
   let output = "";
   const container = document.getElementById("sectionContainer");
   const partDivs = Array.from(container.querySelectorAll(".dchart-section"));
 
-  // For each part in DOM order
-  partDivs.forEach((div) => {
+  // In DOM order, build the final text
+  partDivs.forEach(div => {
     const partLabel = div.dataset.part;
-    const ul = div.querySelector(".sentence-list");
-
-    // If this section includes the title and global toggle is on, add it
     const sectionConfig = dchartSections.find(s => s.part === partLabel);
+
     if (sectionConfig && sectionConfig.includeTitle && includeSectionTitles) {
       output += partLabel + ":\n";
     }
 
-    // for each li in the DOM order
+    const ul = div.querySelector(".sentence-list");
     const liArray = Array.from(ul.querySelectorAll("li"));
     liArray.forEach(li => {
       const sentenceId = li.dataset.id;
@@ -788,7 +780,8 @@ function generateFinalText() {
       }
     });
 
-    output += "\n\n"; // blank line between sections
+    // Blank line between sections
+    output += "\n\n";
   });
 
   return output.trim();
@@ -797,7 +790,7 @@ function generateFinalText() {
 /** Copy final text to clipboard. */
 document.getElementById("copyBtn").addEventListener("click", () => {
   const finalTextArea = document.getElementById("finalText");
-  if (!finalTextArea.value) {
+  if (!finalTextArea.value.trim()) {
     alert("Nothing to copy! Generate the text first.");
     return;
   }
@@ -813,7 +806,6 @@ document.getElementById("copyBtn").addEventListener("click", () => {
 
 // Initialize the application once the DOM is fully loaded
 document.addEventListener("DOMContentLoaded", () => {
-  initializeGlobalID();
   buildSections();
 });
 </script>
