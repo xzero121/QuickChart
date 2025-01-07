@@ -156,7 +156,7 @@
     </h1>
     <div class="form-check form-switch">
       <input class="form-check-input" type="checkbox" id="toggleSectionTitles" checked />
-      <label class="form-check-label" for="toggleSectionTitles">Include Section Titles in Output</label>
+      <label class="form-check-label" for="toggleSectionTitles">Include Section Titles</label>
     </div>
   </div>
 
@@ -174,6 +174,11 @@
 
   <!-- Copy button -->
   <button id="copyBtn" class="btn btn-success mb-5">Copy to Clipboard</button>
+
+  <!-- Disclaimer -->
+  <div class="alert alert-secondary" style="text-align: center;" role="alert">
+    <strong>Disclaimer:</strong> No information is stored or sent to a server. All data is stored in your browser's memory.
+  </div>
 </div>
 
 <!-- Bootstrap 5 JS -->
@@ -182,6 +187,28 @@
 ></script>
 
 <script>
+/**
+ * Global custom dropdown options that can be referenced by label.
+ * If a sentence has [customDropdown:SomeLabel] without inline options,
+ * we look here. If it has inline options, those take precedence.
+ */
+const globalDropdownOptions = {
+  "Unit #": ["Medic 5", "Medic 6"],
+  "Pickup Location": ["Baptist Floyd", "Baptist Freestanding ER in Jeffersonville"],
+  "Gender": ["Male", "Female"],
+  "Response Type": ["Emergent", "Non-Emergent"],
+  "Hospitalized / Evaluated": ["Hospitalized", "Evaluated"],
+  "Mental Status": ["Alert and Oriented", "Confused"],
+  "Method": ["Sheet Draw", "Stand and Pivot"],
+  "Assist Count": ["x1", "x2"],
+  "Straps Count": ["x5"],
+  "Patient Condition": ["Improved", "Unchanged", "Worsened"],
+  "Transfer of Location": ["Hospital Bed"],
+  "Sending Facility": ["Baptist Floyd", "Baptist Freestanding ER in Jeffersonville"],
+  "Reason": ["higher level of care", "long term care"],
+  "Medical Necessity": ["1: Patient was bed confined before and after transport", "2: Patient required Cardiac / Hemodynamic monitoring during transport", "3: Patient is confused&comma; combatative&comma; lethargic&comma; or comatose", "4: Patient has contractures", "5: Patient is a danger to self or others - requires monitoring", "6: Patient has DVT required elevation of lower extremity", "7: Patient requires IV Medications / Fluids during transport", "8: Patient has moderate to severe pain upon movement", "9: Patient is morbidly obese and requires additional personnel / equipment", "10: Patient has non healing fractures", "11: Patient requires orthopedic device requiring special handling in transit", "12: Patient requires or medical provider anticapates restraints (Physical or Chemical)", "13: Patient has a risk of falling off wheelchair or stretcher while in motion","14&: Patient has severe muscular weakness", "15: Patient requires special handling en route - Isolation", "16: Patient requires assistance for administration / regulation of oxygen", "17: Patient is unable to maintain seated position for time needed to transport", "18: Patient is unable to sit in chair or wheelchair due to decubitus ulcer", "19: Patient requires transfer for higher level of care; First hospital lacks equipment / sercives"]
+};
+
 // Initialize globalSentenceID dynamically based on existing sentences
 let globalSentenceID = 1;
 
@@ -196,11 +223,11 @@ let dchartSections = [
     sentences: [
       {
         id: "sentence-1",
-        text: "[customDropdown:Unit #:Medic 5, Medic 6] was dispatched to [customDropdown:Pickup Location:Baptist Floyd, Baptist Freestanding ER in Jeffersonville] for [number:Age]yo [customDropdown:Gender:Male, Female]."
+        text: "[customDropdown:Unit #] was dispatched to [customDropdown:Pickup Location] for [number:Age]yo [customDropdown:Gender]."
       },
       {
         id: "sentence-2",
-        text: "The response was [customDropdown:Response Type:Emergent,Non-Emergent]."
+        text: "The response was [customDropdown:Response Type]."
       },
       {
         id: "sentence-3",
@@ -232,7 +259,7 @@ let dchartSections = [
     sentences: [
       {
         id: "sentence-7",
-        text: "The patient was [customDropdown:Hospitalized / Evaluated:Hospitalized, Evaluated] for [text:Reason]."
+        text: "The patient was [customDropdown:Hospitalized / Evaluated] for [text:Reason]."
       },
       {
         id: "sentence-8",
@@ -250,7 +277,7 @@ let dchartSections = [
     sentences: [
       {
         id: "sentence-9",
-        text: "The patient’s mental status was assessed as [customDropdown:Mental Status:Alert and Oriented, Confused], with ABCs evaluated as [text:ABCs]."
+        text: "The patient’s mental status was assessed as [customDropdown:Mental Status], with ABCs evaluated as [text:ABCs]."
       },
       {
         id: "sentence-10",
@@ -280,7 +307,7 @@ let dchartSections = [
       },
       {
         id: "sentence-12.1",
-        text: "The patient’s condition [customDropdown:Patient Condition:Improved,Unchanged,Worsened] during transport.."
+        text: "The patient’s condition [customDropdown:Patient Condition] during transport.."
       }
     ]
   },
@@ -290,7 +317,7 @@ let dchartSections = [
     sentences: [
       {
         id: "sentence-13",
-        text: "The patient was transferred to the stretcher via [customDropdown:Method:Sheet Draw, Stand and Pivot] with assistance [customDropdown:Assist Count:x1, x2], secured with [customDropdown:Straps Count:x5] straps, and loaded into [customDropdown:Unit #:Medic 5, Medic 6], without complications."
+        text: "The patient was transferred to the stretcher via [customDropdown:Method] with assistance [customDropdown:Assist Count], secured with [customDropdown:Straps Count] straps, and loaded into [customDropdown:Unit #], without complications."
       },
       {
         id: "sentence-14",
@@ -298,7 +325,7 @@ let dchartSections = [
       },
       {
         id: "sentence-14.1",
-        text: "The patient was transferred to [customDropdown:Transfer of Location:Hospital Bed] via [customDropdown:Method:Sheet Draw, Stand and Pivot] with assistance [customDropdown:Assist Count:x1, x2], without complications."
+        text: "The patient was transferred to [customDropdown:Transfer of Location] via [customDropdown:Method] with assistance [customDropdown:Assist Count], without complications."
       },
       {
         id: "sentence-14.2",
@@ -312,11 +339,11 @@ let dchartSections = [
     sentences: [
       {
         id: "sentence-15",
-        text: "The medical necessity for ambulance transport was justified because [customDropdown:Medical Necessity:1&colon; Patient was bed confined before and after transport, 2&colon; Patient required Cardiac / Hemodynamic monitoring during transport, 3&colon; Patient is confused&comma; combatative&comma; lethargic&comma; or comatose, 4&colon; Patient has contractures, 5&colon; Patient is a danger to self or others - requires monitoring, 6&colon; Patient has DVT required elevation of lower extremity, 7&colon; Patient requires IV Medications / Fluids during transport, 8&colon; Patient has moderate to severe pain upon movement, 9&colon; Patient is morbidly obese and requires additional personnel / equipment, 10&colon; Patient has non healing fractures, 11&colon;Patient requires orthopedic device requiring special handling in transit,12&colon; Patient requires or medical provider anticapates restraints (Physical or Chemical),13&colon; Patient has a risk of falling off wheelchair or stretcher while in motion,14&colon; Patient has severe muscular weakness,15&colon; Patient requires special handling en route - Isolation,16&colon; Patient requires assistance for administration / regulation of oxygen,17&colon;Patient is unable to maintain seated position for time needed to transport,18&colon; Patient is unable to sit in chair or wheelchair due to decubitus ulcer,19&colon; Patient requires transfer for higher level of care; First hospital lacks equipment / sercives]."
+        text: "The medical necessity for ambulance transport was justified because [customDropdown:Medical Necessity]."
       },
       {
         id: "sentence-16",
-        text: "The patient was taken to [text:Destination] due to the need for [customDropdown:Reason:higher level of care, long term care] that [customDropdown:Sending Facility:Baptist Floyd, Baptist Freestanding ER in Jeffersonville] was unable to provide."
+        text: "The patient was taken to [text:Destination] due to the need for [customDropdown:Reason] that [customDropdown:Sending Facility] was unable to provide."
       }
     ]
   },
@@ -495,7 +522,13 @@ function buildInlineFields(sentenceObj) {
     const val = (sentenceObj.values && sentenceObj.values[placeholderIndex]) || "";
     placeholderIndex++;
 
-    const optsArray = options ? options.split(",").map(x => x.trim()) : [];
+    // If there are inline options, use them. Otherwise try globalDropdownOptions.
+    let optsArray = [];
+    if (options) {
+      optsArray = options.split(",").map(x => x.trim());
+    } else if (globalDropdownOptions[label]) {
+      optsArray = globalDropdownOptions[label];
+    }
 
     if (type === "customDropdown") {
       const listItems = optsArray.map(opt => `<li class="list-group-item">${opt}</li>`).join("");
@@ -711,7 +744,7 @@ function generateFinalText() {
   const partDivs = Array.from(container.querySelectorAll(".dchart-section"));
 
   // For each part in DOM order
-  partDivs.forEach((div, index) => {
+  partDivs.forEach((div) => {
     const partLabel = div.dataset.part;
     const ul = div.querySelector(".sentence-list");
 
@@ -725,14 +758,12 @@ function generateFinalText() {
     const liArray = Array.from(ul.querySelectorAll("li"));
     liArray.forEach(li => {
       const sentenceId = li.dataset.id;
-      // find the sentence object in the data structure
       const sentenceObj = findSentenceById(sentenceId);
       if (!sentenceObj) {
         console.warn(`Sentence with ID "${sentenceId}" not found.`);
         return;
       }
 
-      // Rebuild text from placeholders in the same order as sentenceObj.values
       let placeholderIndex = 0;
       let replaced = sentenceObj.text.replace(placeholderRegex, () => {
         const val = sentenceObj.values && sentenceObj.values[placeholderIndex]
@@ -747,7 +778,6 @@ function generateFinalText() {
       }
     });
 
-    // End of this section
     output += "\n\n"; // blank line between sections
   });
 
