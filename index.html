@@ -150,7 +150,15 @@
 </head>
 <body>
 <div class="container">
-  <h1 class="mb-4">QuickChart</h1>
+  <div class="d-flex align-items-center justify-content-between mb-4">
+    <h1 class="m-0">
+      QuickChart
+    </h1>
+    <div class="form-check form-switch">
+      <input class="form-check-input" type="checkbox" id="toggleSectionTitles" checked />
+      <label class="form-check-label" for="toggleSectionTitles">Include Section Titles in Output</label>
+    </div>
+  </div>
 
   <!-- Container for parts (D, C, H, A, R, T, M, Sign Off) -->
   <div id="sectionContainer"></div>
@@ -177,10 +185,14 @@
 // Initialize globalSentenceID dynamically based on existing sentences
 let globalSentenceID = 1;
 
-// Example data structure with sentences up to sentence-17
+/*
+  Updated data structure with a boolean flag `includeTitle` for each section
+  to control whether its title should be included in the final output.
+*/
 let dchartSections = [
   {
     part: "D",
+    includeTitle: true,
     sentences: [
       {
         id: "sentence-1",
@@ -202,6 +214,7 @@ let dchartSections = [
   },
   {
     part: "C",
+    includeTitle: true,
     sentences: [
       {
         id: "sentence-5",
@@ -215,6 +228,7 @@ let dchartSections = [
   },
   {
     part: "H",
+    includeTitle: true,
     sentences: [
       {
         id: "sentence-7",
@@ -232,6 +246,7 @@ let dchartSections = [
   },
   {
     part: "A",
+    includeTitle: true,
     sentences: [
       {
         id: "sentence-9",
@@ -253,6 +268,7 @@ let dchartSections = [
   },
   {
     part: "R",
+    includeTitle: true,
     sentences: [
       {
         id: "sentence-11",
@@ -270,6 +286,7 @@ let dchartSections = [
   },
   {
     part: "T",
+    includeTitle: true,
     sentences: [
       {
         id: "sentence-13",
@@ -291,6 +308,7 @@ let dchartSections = [
   },
   {
     part: "M",
+    includeTitle: true,
     sentences: [
       {
         id: "sentence-15",
@@ -304,6 +322,7 @@ let dchartSections = [
   },
   {
     part: "Sign Off",
+    includeTitle: false,
     sentences: [
       {
         id: "sentence-17",
@@ -684,15 +703,24 @@ document.getElementById("generateBtn").addEventListener("click", () => {
 function generateFinalText() {
   // Ensure we store the latest typed values
   storeAllInlineValues();
+
+  const includeSectionTitles = document.getElementById("toggleSectionTitles").checked;
   
   let output = "";
   const container = document.getElementById("sectionContainer");
   const partDivs = Array.from(container.querySelectorAll(".dchart-section"));
 
   // For each part in DOM order
-  partDivs.forEach(div => {
+  partDivs.forEach((div, index) => {
     const partLabel = div.dataset.part;
     const ul = div.querySelector(".sentence-list");
+
+    // If this section includes the title and global toggle is on, add it
+    const sectionConfig = dchartSections.find(s => s.part === partLabel);
+    if (sectionConfig && sectionConfig.includeTitle && includeSectionTitles) {
+      output += partLabel + ":\n";
+    }
+
     // for each li in the DOM order
     const liArray = Array.from(ul.querySelectorAll("li"));
     liArray.forEach(li => {
@@ -718,8 +746,11 @@ function generateFinalText() {
         output += replaced + " ";
       }
     });
-    output += "\n";
+
+    // End of this section
+    output += "\n\n"; // blank line between sections
   });
+
   return output.trim();
 }
 
