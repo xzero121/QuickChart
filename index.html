@@ -146,6 +146,11 @@
       background-color: #007bff;
       color: #fff;
     }
+
+    .alert-warning {
+      margin: .5rem 2rem;
+      font-size: .8rem;
+    }
   </style>
 </head>
 <body>
@@ -154,6 +159,11 @@
     <h1 class="m-0">
       QuickChart
     </h1>
+    <!-- warning message -->
+    <div class="alert alert-warning py-1" role="alert">
+      <strong>Warning:</strong> Sentences moved between sections do not output to final narrative at this time, working on a fix.
+    </div>
+
     <div class="form-check form-switch">
       <input class="form-check-input" type="checkbox" id="toggleSectionTitles" checked />
       <label class="form-check-label" for="toggleSectionTitles">Include Section Titles in Final Output</label>
