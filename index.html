@@ -45,7 +45,7 @@
 
     .sentence-list li {
       background: #ffffff;
-      padding: 0.5rem 0.5rem 0.5rem 2rem;
+      padding: 0.5rem 2rem 0.5rem 2rem;
       margin-bottom: 0.5rem;
       border: 1px solid #dee2e6;
       border-radius: 4px;
@@ -176,7 +176,7 @@
   <button id="copyBtn" class="btn btn-success mb-5">Copy to Clipboard</button>
 
   <!-- Disclaimer -->
-  <div class="alert alert-secondary py-1" style="text-align: center;" role="alert">
+  <div class="alert alert-secondary py-1 text-center" role="alert">
     <strong>Disclaimer:</strong> No information is stored or sent to a server. All data is stored in your browser's memory.
   </div>
 </div>
@@ -231,8 +231,6 @@ const globalDropdownOptions = {
 /*
   Updated data structure with a boolean flag `includeTitle` for each section
   to control whether its title should be included in the final output.
-
-  We omit all explicit 'id' fields and generate them dynamically.
 */
 let dchartSections = [
   {
@@ -358,8 +356,8 @@ let dchartSections = [
 const placeholderRegex = /\[(text|number|dropdown|customDropdown):([^:\]]+)(?::([^:\]]+))?\]/g;
 
 /**
- * Always reassign fresh IDs to each sentence in ascending order. This ensures
- * newly added sentences appear in the final narrative with correct IDs.
+ * Always reassign fresh IDs to each sentence in ascending order. 
+ * This ensures newly added sentences get unique IDs in order.
  */
 function assignDynamicIDs() {
   let counter = 1;
@@ -372,7 +370,7 @@ function assignDynamicIDs() {
 
 /**
  * Store all current inline-field values from the DOM back into the data structure
- * before we rebuild the interface, so we don't lose what's been typed.
+ * so we don't lose what's been typed after re-building or reordering.
  */
 function storeAllInlineValues() {
   dchartSections.forEach(section => {
@@ -425,7 +423,7 @@ function buildSections() {
 
     secObj.sentences.forEach((sentenceObj) => {
       const li = document.createElement("li");
-      li.dataset.id = sentenceObj.id; 
+      li.dataset.id = sentenceObj.id;
 
       // Drag handle
       const handle = document.createElement("span");
@@ -483,7 +481,6 @@ function buildSections() {
     });
 
     sectionDiv.appendChild(form);
-
     container.appendChild(sectionDiv);
   });
 
@@ -605,45 +602,60 @@ function makeSentencesDraggable() {
       animation: 150,
       group: { name: "dchartGroup", pull: true, put: true },
       handle: ".drag-handle",
+      // We'll do a full rebuild from the DOM in one pass:
       onEnd: (evt) => {
-        const oldUl = evt.from; 
-        const newUl = evt.to; 
-        const oldPart = oldUl.dataset.part;
-        const newPart = newUl.dataset.part;
-        // Rebuild old part's sentences
-        const oldSec = dchartSections.find(s => s.part === oldPart);
-        if (oldSec) {
-          oldSec.sentences = readSentenceList(oldUl);
-        }
-        // Rebuild new part's sentences
-        const newSec = dchartSections.find(s => s.part === newPart);
-        if (newSec) {
-          newSec.sentences = readSentenceList(newUl);
-        }
+        storeAllInlineValues();
+
+        // Build a dictionary of existing sentences by ID
+        const sentenceMap = {};
+        dchartSections.forEach(sec => {
+          sec.sentences.forEach(sent => {
+            sentenceMap[sent.id] = sent;
+          });
+        });
+
+        // Clear the data structure
+        dchartSections.forEach(sec => {
+          sec.sentences = [];
+        });
+
+        // For each section, read direct <li> children (ignore dropdown <li>).
+        const container = document.getElementById("sectionContainer");
+        const partDivs = Array.from(container.querySelectorAll(".dchart-section"));
+        partDivs.forEach(div => {
+          const partLabel = div.dataset.part;
+          const section = dchartSections.find(s => s.part === partLabel);
+          if (!section) return;
+
+          // Only the direct <li> children of the .sentence-list
+          const ulEl = div.querySelector(".sentence-list");
+          const liArray = Array.from(ulEl.children).filter(
+            child => child.matches("li[data-id]")
+          );
+
+          liArray.forEach(li => {
+            const id = li.dataset.id;
+            if (sentenceMap[id]) {
+              section.sentences.push(sentenceMap[id]);
+            } else {
+              console.warn(
+                `Sentence with ID "${id}" not found in dictionary. Possibly newly added?`
+              );
+              // Fallback if a brand new item was somehow introduced
+              section.sentences.push({
+                id,
+                text: li.innerText
+              });
+            }
+          });
+        });
+
+        // Rebuild the interface so everything is in sync
+        buildSections();
       }
     });
   });
   attachDropdownLogic();
-}
-
-/** Convert the <li> elements back into an array of {id, text} by reading data-id. */
-function readSentenceList(ul) {
-  const liArray = Array.from(ul.querySelectorAll("li"));
-  const out = [];
-  liArray.forEach(li => {
-    const id = li.dataset.id;
-    if (!id) {
-      console.warn("Found <li> without data-id:", li);
-      return;
-    }
-    const found = findSentenceById(id);
-    if (found) {
-      out.push(found);
-    } else {
-      console.warn(`Sentence with ID "${id}" not found.`);
-    }
-  });
-  return out;
 }
 
 /** Finds a sentence object by ID in all sections. */
@@ -757,7 +769,10 @@ function generateFinalText() {
     }
 
     const ul = div.querySelector(".sentence-list");
-    const liArray = Array.from(ul.querySelectorAll("li"));
+    // Only the direct <li> children
+    const liArray = Array.from(ul.children).filter(
+      child => child.matches("li[data-id]")
+    );
     liArray.forEach(li => {
       const sentenceId = li.dataset.id;
       const sentenceObj = findSentenceById(sentenceId);
