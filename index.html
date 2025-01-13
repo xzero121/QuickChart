@@ -97,7 +97,7 @@
     .add-item-form input[type="text"] {
       flex: 1;
     }
-    /* Suggestions for "Add new sentence" search */
+    /* Suggestions container for the "Add new sentence" field */
     .suggestions-box {
       position: absolute;
       left: 0;
@@ -125,7 +125,7 @@
       background-color: #f2f2f2;
     }
 
-    /* Make inline placeholders smaller */
+    /* Inline placeholders smaller & dotted underline */
     .inline-field {
       display: inline-block;
       width: auto;
@@ -147,7 +147,7 @@
       border-bottom-color: #000;
     }
 
-    /* Custom dropdown suggestions (placeholders) */
+    /* Custom dropdown for placeholders (like [customDropdown:IV Size]) */
     .custom-dropdown {
       display: inline-block;
       position: relative;
@@ -176,29 +176,17 @@
     .suggestions li.highlight {
       background-color: #e9ecef;
     }
-
-    /* We'll use <b> tags to highlight fuzzy matches */
-    b {
-      font-weight: bold;
-      color: black;
-      background: none; /* override any default if needed */
-    }
-
-    .highlight {
-      background-color: #007bff;
-      color: #fff;
-    }
   </style>
 </head>
 <body>
 <div class="container">
   <div class="d-flex align-items-center justify-content-between mb-4">
-    <h1 class="m-0">
-      QuickChart
-    </h1>
+    <h1 class="m-0">QuickChart</h1>
     <div class="form-check form-switch">
       <input class="form-check-input" type="checkbox" id="toggleSectionTitles" checked />
-      <label class="form-check-label" for="toggleSectionTitles">Include Section Titles in Final Output</label>
+      <label class="form-check-label" for="toggleSectionTitles">
+        Include Section Titles in Final Output
+      </label>
     </div>
   </div>
 
@@ -219,7 +207,8 @@
 
   <!-- Disclaimer -->
   <div class="alert alert-secondary py-1 text-center" role="alert">
-    <strong>Disclaimer:</strong> No information is stored or sent to a server. All data is stored in your browser's memory.
+    <strong>Disclaimer:</strong> No information is stored or sent to a server. 
+    All data is stored in your browser's memory.
   </div>
 </div>
 
@@ -227,51 +216,54 @@
 <script
   src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
 ></script>
-<!-- We already loaded Fuse.js above in the <head> -->
 
 <script>
-/**
- * 1) We'll store each "common" sentence with both:
- *    - original: the exact text with placeholders
- *    - display: a shortened version for suggestions (i.e. [IV Size] instead of [customDropdown:IV Size:14G,16G])
- *    - searchable: a version that includes both the short placeholder name AND the options, 
- *                  so searching "14G" or "IV Size" can also match. 
- * 
- * Feel free to add more sentences.
- */
-const rawCommonSentences = [
-  "the patient had [customDropdown:IV Size:14G,16G,18G,20G,22G,24G] IV placed in the [customDropdown:IV Location:left arm,right arm,left hand,right hand] ",
-  "the patient refused further treatment",
-  "the patient remained stable en route",
-  "the patient's GCS was assessed as [number:GCS] ([number:GCS Eye],[number:GCS Verbal],[number:GCS Motor])"
-];
+/* 
+  We'll store each "common" sentence with three forms:
+  1) original   - the exact text with placeholders
+  2) display    - a shortened version for suggestions (like [IV Size])
+  3) searchable - an expanded placeholder version so searching "14G" or "IV" can match
+*/
+
 // Regex for placeholders
 const placeholderRegex = /\[(text|number|dropdown|customDropdown):([^:\]]+)(?::([^:\]]+))?\]/g;
-/** We'll transform these raw sentences into objects with {original, display, searchable}. */
-const commonSentences = rawCommonSentences.map(s => {
-  return {
-    original: s,
-    display: shortPlaceholderString(s),    // [IV Size]
-    searchable: expandedPlaceholderString(s)  // [IV Size(14G,16G,18G)]
-  };
-});
 
-/** 
- * 2) We'll create our Fuse instance for fuzzy searching across both 'display' and 'searchable'.
- *    We enable 'includeMatches' so we can highlight the matched ranges in the 'display' string.
- */
+// Our raw "common sentences"
+const rawCommonSentences = [
+  "The patient had [customDropdown:IV Size:14G,16G,18G,20G,22G,24G] IV placed in the [customDropdown:IV Location:left arm,right arm,left hand,right hand] ",
+  "The patient was on a ventilator [customDropdown:Ventilator Mode:AC,PC,PSV,CPAP] with the following settings: pressure control [number:Pressure], rate [number:Rate], FiO2 [number:FiO2], PEEP [number:PEEP], and tidal volume [number:Tidal Volume].",
+  "The patient was [number:Rate]lmp O2 via [customDropdown:O2 Delivery Device:Nasal Cannula,High Flow Nasal Cannula,Simple Mask,Non-Rebreather Mask,CPAP,Venturi Mask]",
+  "The patient's GCS was assessed as [number:GCS] ([number:GCS Eye],[number:GCS Verbal],[number:GCS Motor])"
+];
+
+/* 
+  Build array of objects:
+*/
+const commonSentences = rawCommonSentences.map(s => ({
+  original: s,
+  display: shortPlaceholderString(s),
+  searchable: expandedPlaceholderString(s)
+}));
+
+/* 
+  Fuse config: 
+  - We'll search across both "display" and "searchable"
+  - minMatchCharLength = 2, threshold = 0.01 => quite strict 
+  - ignoreLocation = true => doesn't matter where in the string it is 
+*/
 const fuseOptions = {
-  keys: ["display", "searchable"], // search across both short & full placeholder text
+  keys: ["display", "searchable"],
   includeMatches: true,
-  threshold: 0.01, // tune to handle typos (0 => exact, 1 => super lenient)
-  minMatchCharLength: 2, // minimum characters to start matching
-  ignoreLocation: true // don't care where the match is
+  threshold: 0.01,
+  minMatchCharLength: 2,
+  ignoreLocation: true
 };
 const fuse = new Fuse(commonSentences, fuseOptions);
 
-/**
- * Global custom dropdown options that can be referenced by label.
- */
+/* 
+  Global custom dropdown options for placeholders like [customDropdown:IV Size].
+  If inline options exist, they override these. 
+*/
 const globalDropdownOptions = {
   "Unit #": ["Medic 5", "Medic 6"],
   "Gender": ["Male", "Female"],
@@ -305,10 +297,14 @@ const globalDropdownOptions = {
     "17: Patient is unable to maintain seated position for time needed to transport",
     "18: Patient is unable to sit in chair or wheelchair due to decubitus ulcer",
     "19: Patient requires transfer for higher level of care; First hospital lacks equipment / sercives"
-  ]
+  ],
 };
 
-/** Our main data structure with D, C, H, etc. sections. */
+/* 
+  Our main data structure with sections "D", "C", "H", "A", "R", "T", "M", "Sign Off".
+  Each has a boolean to control if the title is included, 
+  and an array of sentences with placeholders. 
+*/
 let dchartSections = [
   {
     part: "D",
@@ -429,8 +425,31 @@ let dchartSections = [
   }
 ];
 
+/** 
+ * Removes placeholders & returns something like "[IV Size]" for displaying suggestions.
+ */
+function shortPlaceholderString(sentence) {
+  return sentence.replace(placeholderRegex, (match, type, label, opts) => {
+    return `[${label}]`;
+  });
+}
+
+/** 
+ * Expands placeholders, e.g. "[customDropdown:IV Size:14G,16G]" => "[IV Size(14G,16G)]"
+ * So searching "14G" or "IV Size" can match.
+ */
+function expandedPlaceholderString(sentence) {
+  return sentence.replace(placeholderRegex, (match, theType, label, opts) => {
+    if (!opts) {
+      return `[${label}]`;
+    }
+    return `[${label}(${opts})]`;
+  });
+}
+
 /**
- * Reassign fresh IDs to each sentence in ascending order.
+ * Reassign fresh IDs (sentence-1, sentence-2, etc.) to each sentence 
+ * so we keep them unique and in ascending order.
  */
 function assignDynamicIDs() {
   let counter = 1;
@@ -442,8 +461,8 @@ function assignDynamicIDs() {
 }
 
 /**
- * Store all typed inline-field values from the DOM into the data structure
- * so we don't lose what's been typed after re-building or reordering.
+ * Grab the current inline-field values from the DOM back into our data structure.
+ * This ensures we don't lose typed data after re-build or drag reorder.
  */
 function storeAllInlineValues() {
   dchartSections.forEach(section => {
@@ -461,20 +480,21 @@ function storeAllInlineValues() {
   });
 }
 
-/** 
- * Build the UI from the dchartSections data structure.
+/**
+ * Build the entire UI from dchartSections:
+ *  - Each section with a "part" label
+ *  - The sentence list
+ *  - The "Add new sentence" form with suggestions
  */
 function buildSections() {
-  // First, store what's typed so far
+  // Store typed fields first
   storeAllInlineValues();
-
-  // Reassign IDs so new sentences definitely have valid unique IDs
+  // Reassign sentence IDs
   assignDynamicIDs();
 
   const container = document.getElementById("sectionContainer");
   container.innerHTML = "";
 
-  // For each part
   dchartSections.forEach((secObj) => {
     const sectionDiv = document.createElement("div");
     sectionDiv.classList.add("dchart-section");
@@ -494,6 +514,7 @@ function buildSections() {
     ul.classList.add("sentence-list");
     ul.dataset.part = secObj.part;
 
+    // Add each sentence as <li>
     secObj.sentences.forEach((sentenceObj) => {
       const li = document.createElement("li");
       li.dataset.id = sentenceObj.id;
@@ -529,7 +550,7 @@ function buildSections() {
 
     sectionDiv.appendChild(ul);
 
-    // "Add item" form with fuzzy suggestions
+    // "Add item" form with fuse suggestions
     const form = document.createElement("form");
     form.classList.add("add-item-form");
     form.dataset.part = secObj.part;
@@ -558,7 +579,7 @@ function buildSections() {
     form.appendChild(groupDiv);
     form.appendChild(suggestionsBox);
 
-    // Handle adding brand-new sentence
+    // Handle "Add new sentence"
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       const newText = input.value.trim();
@@ -568,7 +589,7 @@ function buildSections() {
       }
     });
 
-    // Fuzzy search on input
+    // Fuse search on input
     input.addEventListener("input", () => {
       const query = input.value.trim();
       if (!query) {
@@ -576,61 +597,36 @@ function buildSections() {
         return;
       }
 
-      // Fuse search
+      // Get matches from Fuse
       const fuseResults = fuse.search(query);
       if (fuseResults.length === 0) {
         suggestionsBox.style.display = "none";
         return;
       }
 
-      // Build suggestions list
+      // Build suggestions list (no highlighting, just plain text)
       const ulEl = suggestionsBox.querySelector("ul");
       ulEl.innerHTML = "";
       fuseResults.forEach(res => {
-        // `res.item` is the object with .original, .display, .searchable
-        // `res.matches` is an array describing matched ranges
-        const { item, matches } = res;
-
-        // We'll highlight the 'display' text based on the matched range for that key
-        // Because we used 2 keys, we may have matches on 'display' or 'searchable'
-        // We'll combine them so we can highlight everything in 'display' that matched
-        // Note: For brevity, we'll just focus on highlighting the 'display' text's matched characters
-        // from any match that references "display".
-        let highlightRanges = [];
-        if (matches) {
-          matches.forEach(m => {
-            if (m.key === "display") {
-              highlightRanges = m.indices; // array of [start, end] pairs
-            }
-            else if (m.key === "searchable") {
-              // If the user typed "14G" and it matched in "searchable",
-              // we can highlight the entire 'display' or selectively. 
-              // For simplicity, let's highlight the entire display if there's any match in 'searchable'.
-              // Or skip it. Up to you. We'll skip for brevity. 
-            }
-          });
-        }
-        
-        // Actually highlight
+        // res.item => { original, display, searchable }
         const li = document.createElement("li");
-        // li.innerHTML = highlightRanges.length
-        //   ? highlightRangesInString(item.display, highlightRanges)
-        //   : escapeHTML(item.display);
-        li.textContent = item.display;
+        // Just show the display text (no bold or highlight)
+        li.textContent = res.item.display;
 
         li.addEventListener("mousedown", () => {
-          // Insert the original sentence into the section
-          secObj.sentences.push({ text: item.original });
+          // Add the original text into this section
+          secObj.sentences.push({ text: res.item.original });
           input.value = "";
           suggestionsBox.style.display = "none";
           buildSections();
         });
         ulEl.appendChild(li);
       });
+
       suggestionsBox.style.display = "block";
     });
 
-    // Hide suggestions on blur (with short delay so clicks can register)
+    // Hide suggestions on blur
     input.addEventListener("blur", () => {
       setTimeout(() => {
         suggestionsBox.style.display = "none";
@@ -641,77 +637,12 @@ function buildSections() {
     container.appendChild(sectionDiv);
   });
 
+  // Make sentences draggable
   makeSentencesDraggable();
-  attachDropdownLogic(); 
+  attachDropdownLogic();
 }
 
-/** 
- * Convert placeholders in a sentence to a short bracket version for display. 
- * e.g. "[customDropdown:IV Size:14G,16G]" => "[IV Size]"
- */
-function shortPlaceholderString(sentence) {
-  return sentence.replace(placeholderRegex, (match, type, label, opts) => {
-    return `[${label}]`;
-  });
-}
-
-/** 
- * Create a "searchable" placeholder version that includes *both* label and options in parentheses, 
- * so searching "14G" or "IV Size" or "IV" can find it. 
- * e.g. "[customDropdown:IV Size:14G,16G]" => "[IV Size(14G,16G)]"
- */
-function expandedPlaceholderString(sentence) {
-  return sentence.replace(placeholderRegex, (match, theType, label, opts) => {
-    if (!opts) {
-      return `[${label}]`;
-    }
-    return `[${label}(${opts})]`;
-  });
-}
-
-/**
- * Convert a string plus an array of [start, end] indices into a string 
- * where those ranges are wrapped in <b> tags.
- */
-function highlightRangesInString(str, indices) {
-  let result = "";
-  let lastIndex = 0;
-
-  // indices might look like: [[2, 4], [7, 9]] 
-  // meaning the substring from 2..4 and 7..9 matched
-  // We'll merge them if needed, but Fuse often merges already.
-
-  indices.forEach(pair => {
-    const start = pair[0];
-    const end = pair[1];
-    // Add the text before the match
-    if (lastIndex < start) {
-      result += escapeHTML(str.slice(lastIndex, start));
-    }
-    // Add the matched portion in <b>
-    result += `<b>${escapeHTML(str.slice(start, end + 1))}</b>`;
-    lastIndex = end + 1;
-  });
-
-  // Add any remaining text after the last match
-  result += escapeHTML(str.slice(lastIndex));
-  return result;
-}
-
-/** Basic HTML escape to prevent injection issues. */
-function escapeHTML(str) {
-  return str.replace(/[&<>"']/g, (m) => {
-    switch (m) {
-      case "&": return "&amp;";
-      case "<": return "&lt;";
-      case ">": return "&gt;";
-      case "\"": return "&quot;";
-      case "'": return "&#39;";
-    }
-  });
-}
-
-/** Removes the sentence with the given ID from the given part. */
+/** Remove a sentence from a given part by ID. */
 function removeSentence(partLabel, sentenceId) {
   const section = dchartSections.find(s => s.part === partLabel);
   if (!section) {
@@ -720,22 +651,25 @@ function removeSentence(partLabel, sentenceId) {
   }
   const idx = section.sentences.findIndex(s => s.id === sentenceId);
   if (idx === -1) {
-    console.error(`Sentence ID "${sentenceId}" not found in section "${partLabel}".`);
+    console.error(`Sentence ID "${sentenceId}" not found in "${partLabel}".`);
     return;
   }
   section.sentences.splice(idx, 1);
 }
 
-/** Renders placeholders (text, customDropdown, etc.) as inline fields. */
+/**
+ * Insert placeholders as inline <input> fields for easy editing.
+ */
 function buildInlineFields(sentenceObj) {
   let placeholderIndex = 0;
+  // remove any <br> from original text
   const noBr = sentenceObj.text.replace(/<br\s*\/?>/gi, "");
 
   return noBr.replace(placeholderRegex, (match, type, label, options) => {
     const val = (sentenceObj.values && sentenceObj.values[placeholderIndex]) || "";
     placeholderIndex++;
 
-    // If there are inline options, use them. Otherwise try globalDropdownOptions.
+    // If we have inline placeholder options, use them. Else check global.
     let optsArray = [];
     if (options) {
       optsArray = options.split(",").map(x => x.trim());
@@ -743,6 +677,7 @@ function buildInlineFields(sentenceObj) {
       optsArray = globalDropdownOptions[label];
     }
 
+    // Build a custom dropdown if type===customDropdown, etc.
     if (type === "customDropdown") {
       const listItems = optsArray
         .map(opt => `<li class="list-group-item">${opt}</li>`)
@@ -758,9 +693,7 @@ function buildInlineFields(sentenceObj) {
             placeholder="${label}"
             value="${val}"
           />
-          <ul class="suggestions">
-            ${listItems}
-          </ul>
+          <ul class="suggestions">${listItems}</ul>
         </div>
       `;
     }
@@ -813,11 +746,14 @@ function buildInlineFields(sentenceObj) {
         />
       `;
     }
+    // If unknown type, just return match
     return match; 
   });
 }
 
-/** Make sentences reorderable (including cross-group dragging). */
+/**
+ * Make sentences reorderable between sections with SortableJS.
+ */
 function makeSentencesDraggable() {
   const lists = document.querySelectorAll(".sentence-list");
   lists.forEach(ul => {
@@ -825,11 +761,11 @@ function makeSentencesDraggable() {
       animation: 150,
       group: { name: "dchartGroup", pull: true, put: true },
       handle: ".drag-handle",
-      // We'll do a full rebuild from the DOM in one pass:
-      onEnd: (evt) => {
+      onEnd: () => {
+        // Store typed fields before reading DOM
         storeAllInlineValues();
 
-        // Build a dictionary of existing sentences by ID
+        // Build a dictionary by ID
         const sentenceMap = {};
         dchartSections.forEach(sec => {
           sec.sentences.forEach(sent => {
@@ -837,12 +773,12 @@ function makeSentencesDraggable() {
           });
         });
 
-        // Clear the data structure
+        // Clear old data
         dchartSections.forEach(sec => {
           sec.sentences = [];
         });
 
-        // For each section, read direct <li> children (ignore dropdown <li>).
+        // Re-read DOM in new order
         const container = document.getElementById("sectionContainer");
         const partDivs = Array.from(container.querySelectorAll(".dchart-section"));
         partDivs.forEach(div => {
@@ -850,29 +786,20 @@ function makeSentencesDraggable() {
           const section = dchartSections.find(s => s.part === partLabel);
           if (!section) return;
 
-          // Only the direct <li> children
           const ulEl = div.querySelector(".sentence-list");
-          const liArray = Array.from(ulEl.children).filter(
-            child => child.matches("li[data-id]")
-          );
-
+          const liArray = Array.from(ulEl.children).filter(child => child.matches("li[data-id]"));
           liArray.forEach(li => {
             const id = li.dataset.id;
             if (sentenceMap[id]) {
               section.sentences.push(sentenceMap[id]);
             } else {
-              console.warn(
-                `Sentence with ID "${id}" not found in dictionary. Possibly newly added?`
-              );
-              section.sentences.push({
-                id,
-                text: li.innerText
-              });
+              console.warn(`ID "${id}" not found in dictionary. Possibly new?`);
+              section.sentences.push({ id, text: li.innerText });
             }
           });
         });
 
-        // Rebuild the interface so everything is in sync
+        // Rebuild
         buildSections();
       }
     });
@@ -880,16 +807,10 @@ function makeSentencesDraggable() {
   attachDropdownLogic();
 }
 
-/** Finds a sentence object by ID in all sections. */
-function findSentenceById(id) {
-  for (const sec of dchartSections) {
-    const s = sec.sentences.find(x => x.id === id);
-    if (s) return s;
-  }
-  return null;
-}
-
-/** Initialize custom dropdown logic (arrow keys, etc.) for placeholders. */
+/** 
+ * Attach dropdown logic for placeholders (like [customDropdown:IV Size]), 
+ * so that focusing shows a suggestion list, arrow keys, etc.
+ */
 function attachDropdownLogic() {
   document.querySelectorAll(".custom-dropdown").forEach((dropdown) => {
     const input = dropdown.querySelector(".custom-dropdown-input");
@@ -956,44 +877,41 @@ function attachDropdownLogic() {
   });
 }
 
-/** Generate final text by reading each part's sentences in DOM order
- *  and substituting placeholders with the UI's .inline-field values.
+/** 
+ * Generate final text by reading each section & sentence from the DOM order 
+ * and substituting placeholders with user-typed values. 
  */
 document.getElementById("generateBtn").addEventListener("click", () => {
   const finalText = generateFinalText();
-  // If final text area has content, confirm override
   const finalTextArea = document.getElementById("finalText");
   if (finalTextArea.value.trim()) {
-    if (confirm("This will override the current final narrative. Continue?")) {
-      finalTextArea.value = finalText;
+    if (!confirm("This will override the current final narrative. Continue?")) {
+      return;
     }
-  } else {
-    finalTextArea.value = finalText;
   }
+  finalTextArea.value = finalText;
 });
 
 function generateFinalText() {
-  // Ensure we store what's typed in the placeholders
-  storeAllInlineValues();
+  storeAllInlineValues(); // ensure placeholders are up to date
 
   const includeSectionTitles = document.getElementById("toggleSectionTitles").checked;
   let output = "";
   const container = document.getElementById("sectionContainer");
   const partDivs = Array.from(container.querySelectorAll(".dchart-section"));
 
-  // In DOM order, build the final text
   partDivs.forEach(div => {
     const partLabel = div.dataset.part;
     const sectionConfig = dchartSections.find(s => s.part === partLabel);
 
+    // Optionally add section title
     if (sectionConfig && sectionConfig.includeTitle && includeSectionTitles) {
       output += partLabel + ":\n";
     }
 
+    // Grab each sentence <li>, find its data object, and fill placeholders
     const ul = div.querySelector(".sentence-list");
-    const liArray = Array.from(ul.children).filter(
-      child => child.matches("li[data-id]")
-    );
+    const liArray = Array.from(ul.children).filter(child => child.matches("li[data-id]"));
     liArray.forEach(li => {
       const sentenceId = li.dataset.id;
       const sentenceObj = findSentenceById(sentenceId);
@@ -1010,20 +928,24 @@ function generateFinalText() {
         placeholderIndex++;
         return val;
       });
+
+      // Remove any <br> from the final text
       replaced = replaced.replace(/<br\s*\/?>/gi, "");
+
       if (replaced) {
         output += replaced + " ";
       }
     });
 
-    // Blank line between sections
-    output += "\n\n";
+    output += "\n\n"; // blank line between sections
   });
 
   return output.trim();
 }
 
-/** Copy final text to clipboard. */
+/** 
+ * Copy final text to clipboard 
+ */
 document.getElementById("copyBtn").addEventListener("click", () => {
   const finalTextArea = document.getElementById("finalText");
   if (!finalTextArea.value.trim()) {
@@ -1040,10 +962,23 @@ document.getElementById("copyBtn").addEventListener("click", () => {
     });
 });
 
-// Initialize the application once the DOM is fully loaded
+/** 
+ * Once DOM is ready, build initial interface 
+ */
 document.addEventListener("DOMContentLoaded", () => {
   buildSections();
 });
+
+/** 
+ * Finds a sentence object by ID in all sections.
+ */
+function findSentenceById(id) {
+  for (const sec of dchartSections) {
+    const s = sec.sentences.find(x => x.id === id);
+    if (s) return s;
+  }
+  return null;
+}
 </script>
 </body>
 </html>
