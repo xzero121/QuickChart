@@ -12,6 +12,8 @@
   />
   <!-- SortableJS (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+  <!-- Fuse.js (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.6.2/dist/fuse.min.js"></script>
 
   <style>
     body {
@@ -45,7 +47,7 @@
 
     .sentence-list li {
       background: #ffffff;
-      padding: 0.5rem 2rem 0.5rem 2rem; /* extra left padding for the handle */
+      padding: 0.5rem 2rem 0.5rem 2rem;
       margin-bottom: 0.5rem;
       border: 1px solid #dee2e6;
       border-radius: 4px;
@@ -81,16 +83,49 @@
     }
 
     .add-item-form {
+      display: inline-block;
+      width: 100%;
+      position: relative;
+    }
+    .add-item-group {
       display: flex;
       gap: 0.5rem;
       margin-top: 0.5rem;
       align-items: center;
+      width: 100%;
     }
     .add-item-form input[type="text"] {
       flex: 1;
     }
+    /* Suggestions container for the "Add new sentence" field */
+    .suggestions-box {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: 42px; /* just below the input */
+      z-index: 999;
+      background: white;
+      border: 1px solid #ced4da;
+      border-radius: 4px;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+    }
+    .suggestions-box ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .suggestions-box li {
+      padding: 6px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+    }
+    .suggestions-box li:hover {
+      background-color: #f2f2f2;
+    }
 
-    /* Make inline placeholders smaller */
+    /* Inline placeholders smaller & dotted underline */
     .inline-field {
       display: inline-block;
       width: auto;
@@ -112,7 +147,7 @@
       border-bottom-color: #000;
     }
 
-    /* Custom dropdown suggestions */
+    /* Custom dropdown for placeholders (like [customDropdown:IV Size]) */
     .custom-dropdown {
       display: inline-block;
       position: relative;
@@ -160,13 +195,15 @@
       QuickChart
     </h1>
     <!-- warning message -->
-    <div class="alert alert-warning py-1" role="alert">
+    <div class="alert alert-warning py-1" style="display: none" role="alert">
       <strong>Warning:</strong> Sentences moved between sections do not output to final narrative at this time, working on a fix.
     </div>
 
     <div class="form-check form-switch">
       <input class="form-check-input" type="checkbox" id="toggleSectionTitles" checked />
-      <label class="form-check-label" for="toggleSectionTitles">Include Section Titles in Final Output</label>
+      <label class="form-check-label" for="toggleSectionTitles">
+        Include Section Titles in Final Output
+      </label>
     </div>
   </div>
 
@@ -186,8 +223,9 @@
   <button id="copyBtn" class="btn btn-success mb-5">Copy to Clipboard</button>
 
   <!-- Disclaimer -->
-  <div class="alert alert-secondary py-1" style="text-align: center;" role="alert">
-    <strong>Disclaimer:</strong> No information is stored or sent to a server. All data is stored in your browser's memory.
+  <div class="alert alert-secondary py-1 text-center" role="alert">
+    <strong>Disclaimer:</strong> No information is stored or sent to a server. 
+    All data is stored in your browser's memory.
   </div>
 </div>
 
@@ -197,11 +235,52 @@
 ></script>
 
 <script>
-/**
- * Global custom dropdown options that can be referenced by label.
- * If a sentence has [customDropdown:SomeLabel] without inline options,
- * we look here. If it has inline options, those take precedence.
- */
+/* 
+  We'll store each "common" sentence with three forms:
+  1) original   - the exact text with placeholders
+  2) display    - a shortened version for suggestions (like [IV Size])
+  3) searchable - an expanded placeholder version so searching "14G" or "IV" can match
+*/
+
+// Regex for placeholders
+const placeholderRegex = /\[(text|number|dropdown|customDropdown):([^:\]]+)(?::([^:\]]+))?\]/g;
+
+// Our raw "common sentences"
+const rawCommonSentences = [
+  "The patient had [customDropdown:IV Size:14G,16G,18G,20G,22G,24G] IV placed in the [customDropdown:IV Location:left arm,right arm,left hand,right hand] ",
+  "The patient was on a ventilator [customDropdown:Ventilator Mode:AC,PC,PSV,CPAP] with the following settings: pressure control [number:Pressure], rate [number:Rate], FiO2 [number:FiO2], PEEP [number:PEEP], and tidal volume [number:Tidal Volume].",
+  "The patient was [number:Rate]lmp O2 via [customDropdown:O2 Delivery Device:Nasal Cannula,High Flow Nasal Cannula,Simple Mask,Non-Rebreather Mask,CPAP,Venturi Mask]",
+  "The patient's GCS was assessed as [number:GCS] ([number:GCS Eye],[number:GCS Verbal],[number:GCS Motor])"
+];
+
+/* 
+  Build array of objects:
+*/
+const commonSentences = rawCommonSentences.map(s => ({
+  original: s,
+  display: shortPlaceholderString(s),
+  searchable: expandedPlaceholderString(s)
+}));
+
+/* 
+  Fuse config: 
+  - We'll search across both "display" and "searchable"
+  - minMatchCharLength = 2, threshold = 0.01 => quite strict 
+  - ignoreLocation = true => doesn't matter where in the string it is 
+*/
+const fuseOptions = {
+  keys: ["display", "searchable"],
+  includeMatches: true,
+  threshold: 0.01,
+  minMatchCharLength: 2,
+  ignoreLocation: true
+};
+const fuse = new Fuse(commonSentences, fuseOptions);
+
+/* 
+  Global custom dropdown options for placeholders like [customDropdown:IV Size].
+  If inline options exist, they override these. 
+*/
 const globalDropdownOptions = {
   "Unit #": ["Medic 5", "Medic 6"],
   "Gender": ["Male", "Female"],
@@ -215,15 +294,33 @@ const globalDropdownOptions = {
   "Transfer of Location": ["hospital bed"],
   "Sending Facility": ["Baptist Floyd", "Baptist Freestanding ER in Jeffersonville"],
   "Reason": ["higher level of care", "long term care"],
-  "Medical Necessity": ["1: Patient was bed confined before and after transport", "2: Patient required Cardiac / Hemodynamic monitoring during transport", "3: Patient is confused, combatative, lethargic, or comatose", "4: Patient has contractures", "5: Patient is a danger to self or others - requires monitoring", "6: Patient has DVT required elevation of lower extremity", "7: Patient requires IV Medications / Fluids during transport", "8: Patient has moderate to severe pain upon movement", "9: Patient is morbidly obese and requires additional personnel / equipment", "10: Patient has non healing fractures", "11: Patient requires orthopedic device requiring special handling in transit", "12: Patient requires or medical provider anticapates restraints (Physical or Chemical)", "13: Patient has a risk of falling off wheelchair or stretcher while in motion","14: Patient has severe muscular weakness", "15: Patient requires special handling en route - Isolation", "16: Patient requires assistance for administration / regulation of oxygen", "17: Patient is unable to maintain seated position for time needed to transport", "18: Patient is unable to sit in chair or wheelchair due to decubitus ulcer", "19: Patient requires transfer for higher level of care; First hospital lacks equipment / sercives"]
+  "Medical Necessity": [
+    "1: Patient was bed confined before and after transport",
+    "2: Patient required Cardiac / Hemodynamic monitoring during transport",
+    "3: Patient is confused, combatative, lethargic, or comatose",
+    "4: Patient has contractures",
+    "5: Patient is a danger to self or others - requires monitoring",
+    "6: Patient has DVT required elevation of lower extremity",
+    "7: Patient requires IV Medications / Fluids during transport",
+    "8: Patient has moderate to severe pain upon movement",
+    "9: Patient is morbidly obese and requires additional personnel / equipment",
+    "10: Patient has non healing fractures",
+    "11: Patient requires orthopedic device requiring special handling in transit",
+    "12: Patient requires or medical provider anticapates restraints (Physical or Chemical)",
+    "13: Patient has a risk of falling off wheelchair or stretcher while in motion",
+    "14: Patient has severe muscular weakness",
+    "15: Patient requires special handling en route - Isolation",
+    "16: Patient requires assistance for administration / regulation of oxygen",
+    "17: Patient is unable to maintain seated position for time needed to transport",
+    "18: Patient is unable to sit in chair or wheelchair due to decubitus ulcer",
+    "19: Patient requires transfer for higher level of care; First hospital lacks equipment / sercives"
+  ],
 };
 
-// Initialize globalSentenceID dynamically based on existing sentences
-let globalSentenceID = 1;
-
-/*
-  Updated data structure with a boolean flag `includeTitle` for each section
-  to control whether its title should be included in the final output.
+/* 
+  Our main data structure with sections "D", "C", "H", "A", "R", "T", "M", "Sign Off".
+  Each has a boolean to control if the title is included, 
+  and an array of sentences with placeholders. 
 */
 let dchartSections = [
   {
@@ -231,19 +328,15 @@ let dchartSections = [
     includeTitle: true,
     sentences: [
       {
-        id: "sentence-1",
         text: "[customDropdown:Unit #] was dispatched to [customDropdown:Sending Facility] for [number:Age]yo [customDropdown:Gender]."
       },
       {
-        id: "sentence-2",
         text: "The response was [customDropdown:Response Type]."
       },
       {
-        id: "sentence-3",
         text: "Upon arrival, the patient’s condition was [text:Initial Condition]."
       },
       {
-        id: "sentence-4",
         text: "No immediate intervention or additional resources were required."
       }
     ]
@@ -253,7 +346,6 @@ let dchartSections = [
     includeTitle: true,
     sentences: [
       {
-        id: "sentence-5",
         text: "The patient’s chief complaint is [text:Chief Complaint], which has been ongoing for [number:Duration] [customDropdown:Duration Units:Minutes, Hours, Days, Weeks, Years]."
       }
     ]
@@ -263,15 +355,12 @@ let dchartSections = [
     includeTitle: true,
     sentences: [
       {
-        id: "sentence-7",
-        text: "The patient was [customDropdown:Hospitalized / Evaluated] for [text:Reason]."
+        text: "The patient was recently [customDropdown:Hospitalized / Evaluated] for [text:Reason]."
       },
       {
-        id: "sentence-8",
         text: "The patient’s medical history, medications, and allergies are detailed in the HPI. The OPQRST assessment, along with the SAMPLE history, is documented above."
       },
       {
-        id: "sentence-8.1",
         text: "Including [text:Pertinent Positive Findings]."
       }
     ]
@@ -281,19 +370,15 @@ let dchartSections = [
     includeTitle: true,
     sentences: [
       {
-        id: "sentence-9",
         text: "The patient’s mental status was assessed as [customDropdown:Mental Status], with ABCs evaluated as [text:ABCs]."
       },
       {
-        id: "sentence-10",
         text: "Primary assessment findings, documented in the treatment tab, revealed [text:Assessment Status]."
       },
       {
-        id: "sentence-10.1",
         text: "Advanced Life Support (ALS) assessment was performed by [text:Provider]."
       },
       {
-        id: "sentence-10.2",
         text: "Basic Life Support (BLS) assessments were conducted by [text:Provider]."
       }
     ]
@@ -303,16 +388,13 @@ let dchartSections = [
     includeTitle: true,
     sentences: [
       {
-        id: "sentence-11",
         text: "The patient’s vital signs, along with any performed interventions, are detailed in the treatment section."
       },
       {
-        id: "sentence-12",
         text: "Additional interventions were necessary to manage the patient’s condition due to [text:Additional Reason], and these included [text:Interventions]."
       },
       {
-        id: "sentence-12.1",
-        text: "The patient’s condition [customDropdown:Patient Condition] during transport."
+        text: "The patient’s condition [customDropdown:Patient Condition] during transport.."
       }
     ]
   },
@@ -321,23 +403,18 @@ let dchartSections = [
     includeTitle: true,
     sentences: [
       {
-        id: "sentence-13",
         text: "The patient was transferred to the stretcher via [customDropdown:Method] with assistance [customDropdown:Assist Count], secured with [customDropdown:Straps Count] straps, and loaded into [customDropdown:Unit #], without complications."
       },
       {
-        id: "sentence-14",
         text: "The patient was transported to [text:Receiving Facility]."
-      },      
+      },
       {
-        id: "sentence-141",
         text: "Upon arrival, the patient’s condition was [text:Arrival Condition]."
-      }, 
+      },
       {
-        id: "sentence-14.2",
         text: "The patient was transferred to [customDropdown:Transfer of Location] via [customDropdown:Method] with assistance [customDropdown:Assist Count], without complications."
       },
       {
-        id: "sentence-14.3",
         text: "A full report was provided to [text:Receiving Provider]."
       }
     ]
@@ -347,11 +424,9 @@ let dchartSections = [
     includeTitle: true,
     sentences: [
       {
-        id: "sentence-15",
         text: "The medical necessity for ambulance transport was justified because [customDropdown:Medical Necessity]."
       },
       {
-        id: "sentence-16",
         text: "The patient was taken to [text:Destination] due to the need for [customDropdown:Reason] that [customDropdown:Sending Facility] was unable to provide."
       }
     ]
@@ -361,34 +436,50 @@ let dchartSections = [
     includeTitle: false,
     sentences: [
       {
-        id: "sentence-17",
         text: "I, [text:Provider], hereby certify that the above findings are accurate and complete to the best of my knowledge."
       }
     ]
   }
 ];
 
-// We'll store user-entered values in each sentenceObj as an array of values in the same order as the placeholders.
-const placeholderRegex = /\[(text|number|dropdown|customDropdown):([^:\]]+)(?::([^:\]]+))?\]/g;
-
-/**
- * Initialize globalSentenceID based on existing sentences
+/** 
+ * Removes placeholders & returns something like "[IV Size]" for displaying suggestions.
  */
-function initializeGlobalID() {
-  let maxID = 0;
-  dchartSections.forEach(section => {
-    section.sentences.forEach(sentence => {
-      const num = parseInt(sentence.id.split('-')[1], 10);
-      if (num > maxID) maxID = num;
-    });
+function shortPlaceholderString(sentence) {
+  return sentence.replace(placeholderRegex, (match, type, label, opts) => {
+    return `[${label}]`;
   });
-  globalSentenceID = maxID + 1;
-  console.log(`Initialized globalSentenceID to ${globalSentenceID}`);
+}
+
+/** 
+ * Expands placeholders, e.g. "[customDropdown:IV Size:14G,16G]" => "[IV Size(14G,16G)]"
+ * So searching "14G" or "IV Size" can match.
+ */
+function expandedPlaceholderString(sentence) {
+  return sentence.replace(placeholderRegex, (match, theType, label, opts) => {
+    if (!opts) {
+      return `[${label}]`;
+    }
+    return `[${label}(${opts})]`;
+  });
 }
 
 /**
- * Store all current inline-field values from the DOM back into the data structure
- * before we rebuild (so we don't lose them).
+ * Reassign fresh IDs (sentence-1, sentence-2, etc.) to each sentence 
+ * so we keep them unique and in ascending order.
+ */
+function assignDynamicIDs() {
+  let counter = 1;
+  dchartSections.forEach(section => {
+    section.sentences.forEach(sentenceObj => {
+      sentenceObj.id = "sentence-" + counter++;
+    });
+  });
+}
+
+/**
+ * Grab the current inline-field values from the DOM back into our data structure.
+ * This ensures we don't lose typed data after re-build or drag reorder.
  */
 function storeAllInlineValues() {
   dchartSections.forEach(section => {
@@ -406,17 +497,21 @@ function storeAllInlineValues() {
   });
 }
 
-/** 
- * Rebuilds the UI from dchartSections.
+/**
+ * Build the entire UI from dchartSections:
+ *  - Each section with a "part" label
+ *  - The sentence list
+ *  - The "Add new sentence" form with suggestions
  */
 function buildSections() {
-  // First, store everything the user typed so far
+  // Store typed fields first
   storeAllInlineValues();
+  // Reassign sentence IDs
+  assignDynamicIDs();
 
   const container = document.getElementById("sectionContainer");
   container.innerHTML = "";
 
-  // For each part
   dchartSections.forEach((secObj) => {
     const sectionDiv = document.createElement("div");
     sectionDiv.classList.add("dchart-section");
@@ -436,14 +531,15 @@ function buildSections() {
     ul.classList.add("sentence-list");
     ul.dataset.part = secObj.part;
 
+    // Add each sentence as <li>
     secObj.sentences.forEach((sentenceObj) => {
       const li = document.createElement("li");
-      li.dataset.id = sentenceObj.id; 
+      li.dataset.id = sentenceObj.id;
 
-      // Create a drag handle
+      // Drag handle
       const handle = document.createElement("span");
       handle.classList.add("drag-handle");
-      handle.innerHTML = "&#9776;"; // drag icon
+      handle.innerHTML = "&#9776;";
       li.appendChild(handle);
 
       // Insert placeholders / inline fields
@@ -451,7 +547,7 @@ function buildSections() {
       contentWrapper.innerHTML = buildInlineFields(sentenceObj);
       li.appendChild(contentWrapper);
 
-      // Red X remove button
+      // Remove button
       const removeBtn = document.createElement("button");
       removeBtn.classList.add("remove-sentence-btn");
       removeBtn.type = "button";
@@ -471,42 +567,99 @@ function buildSections() {
 
     sectionDiv.appendChild(ul);
 
-    // "Add item" form
+    // "Add item" form with fuse suggestions
     const form = document.createElement("form");
     form.classList.add("add-item-form");
+    form.dataset.part = secObj.part;
+
+    const groupDiv = document.createElement("div");
+    groupDiv.classList.add("add-item-group");
+
     const input = document.createElement("input");
     input.type = "text";
     input.classList.add("form-control", "form-control-sm");
-    input.placeholder = "New sentence...";
+    input.placeholder = "add a new sentence...";
+
     const addBtn = document.createElement("button");
     addBtn.type = "submit";
     addBtn.classList.add("btn", "btn-sm", "btn-secondary");
     addBtn.innerText = "Add";
 
-    form.appendChild(input);
-    form.appendChild(addBtn);
+    groupDiv.appendChild(input);
+    groupDiv.appendChild(addBtn);
 
+    // The suggestions container
+    const suggestionsBox = document.createElement("div");
+    suggestionsBox.classList.add("suggestions-box");
+    suggestionsBox.innerHTML = `<ul></ul>`;
+
+    form.appendChild(groupDiv);
+    form.appendChild(suggestionsBox);
+
+    // Handle "Add new sentence"
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       const newText = input.value.trim();
       if (newText) {
-        const newID = "sentence-" + (globalSentenceID++);
-        console.log(`Adding new sentence with ID: ${newID}`);
-        secObj.sentences.push({ id: newID, text: newText });
+        secObj.sentences.push({ text: newText });
         buildSections();
       }
     });
 
-    sectionDiv.appendChild(form);
+    // Fuse search on input
+    input.addEventListener("input", () => {
+      const query = input.value.trim();
+      if (!query) {
+        suggestionsBox.style.display = "none";
+        return;
+      }
 
+      // Get matches from Fuse
+      const fuseResults = fuse.search(query);
+      if (fuseResults.length === 0) {
+        suggestionsBox.style.display = "none";
+        return;
+      }
+
+      // Build suggestions list (no highlighting, just plain text)
+      const ulEl = suggestionsBox.querySelector("ul");
+      ulEl.innerHTML = "";
+      fuseResults.forEach(res => {
+        // res.item => { original, display, searchable }
+        const li = document.createElement("li");
+        // Just show the display text (no bold or highlight)
+        li.textContent = res.item.display;
+
+        li.addEventListener("mousedown", () => {
+          // Add the original text into this section
+          secObj.sentences.push({ text: res.item.original });
+          input.value = "";
+          suggestionsBox.style.display = "none";
+          buildSections();
+        });
+        ulEl.appendChild(li);
+      });
+
+      suggestionsBox.style.display = "block";
+    });
+
+    // Hide suggestions on blur
+    input.addEventListener("blur", () => {
+      setTimeout(() => {
+        suggestionsBox.style.display = "none";
+      }, 150);
+    });
+
+    sectionDiv.appendChild(form);
     container.appendChild(sectionDiv);
   });
 
+  // Make sentences draggable
   makeSentencesDraggable();
-  attachDropdownLogic(); 
+  attachDropdownLogic();
 }
 
-/** Removes the sentence with the given ID from the given part. */
+/** Remove a sentence from a given part by ID. */
 function removeSentence(partLabel, sentenceId) {
   const section = dchartSections.find(s => s.part === partLabel);
   if (!section) {
@@ -515,23 +668,25 @@ function removeSentence(partLabel, sentenceId) {
   }
   const idx = section.sentences.findIndex(s => s.id === sentenceId);
   if (idx === -1) {
-    console.error(`Sentence ID "${sentenceId}" not found in section "${partLabel}".`);
+    console.error(`Sentence ID "${sentenceId}" not found in "${partLabel}".`);
     return;
   }
-  console.log(`Removing sentence ID: ${sentenceId} from section: ${partLabel}`);
   section.sentences.splice(idx, 1);
 }
 
-/** Renders placeholders (text, customDropdown, etc.) as inline fields. */
+/**
+ * Insert placeholders as inline <input> fields for easy editing.
+ */
 function buildInlineFields(sentenceObj) {
   let placeholderIndex = 0;
+  // remove any <br> from original text
   const noBr = sentenceObj.text.replace(/<br\s*\/?>/gi, "");
 
   return noBr.replace(placeholderRegex, (match, type, label, options) => {
     const val = (sentenceObj.values && sentenceObj.values[placeholderIndex]) || "";
     placeholderIndex++;
 
-    // If there are inline options, use them. Otherwise try globalDropdownOptions.
+    // If we have inline placeholder options, use them. Else check global.
     let optsArray = [];
     if (options) {
       optsArray = options.split(",").map(x => x.trim());
@@ -539,8 +694,11 @@ function buildInlineFields(sentenceObj) {
       optsArray = globalDropdownOptions[label];
     }
 
+    // Build a custom dropdown if type===customDropdown, etc.
     if (type === "customDropdown") {
-      const listItems = optsArray.map(opt => `<li class="list-group-item">${opt}</li>`).join("");
+      const listItems = optsArray
+        .map(opt => `<li class="list-group-item">${opt}</li>`)
+        .join("");
       return `
         <div class="custom-dropdown">
           <input
@@ -552,9 +710,7 @@ function buildInlineFields(sentenceObj) {
             placeholder="${label}"
             value="${val}"
           />
-          <ul class="suggestions">
-            ${listItems}
-          </ul>
+          <ul class="suggestions">${listItems}</ul>
         </div>
       `;
     }
@@ -607,11 +763,14 @@ function buildInlineFields(sentenceObj) {
         />
       `;
     }
+    // If unknown type, just return match
     return match; 
   });
 }
 
-/** Make sentences reorderable (including cross-group dragging). */
+/**
+ * Make sentences reorderable between sections with SortableJS.
+ */
 function makeSentencesDraggable() {
   const lists = document.querySelectorAll(".sentence-list");
   lists.forEach(ul => {
@@ -619,59 +778,56 @@ function makeSentencesDraggable() {
       animation: 150,
       group: { name: "dchartGroup", pull: true, put: true },
       handle: ".drag-handle",
-      onEnd: (evt) => {
-        const oldUl = evt.from; 
-        const newUl = evt.to; 
-        const oldPart = oldUl.dataset.part;
-        const newPart = newUl.dataset.part;
-        console.log(`Moved sentence from "${oldPart}" to "${newPart}"`);
+      onEnd: () => {
+        // Store typed fields before reading DOM
+        storeAllInlineValues();
 
-        // Rebuild old part's sentences from the DOM
-        const oldSec = dchartSections.find(s => s.part === oldPart);
-        if (oldSec) {
-          oldSec.sentences = readSentenceList(oldUl);
-          console.log(`Updated sentences in "${oldPart}":`, oldSec.sentences.map(s => s.id));
-        }
+        // Build a dictionary by ID
+        const sentenceMap = {};
+        dchartSections.forEach(sec => {
+          sec.sentences.forEach(sent => {
+            sentenceMap[sent.id] = sent;
+          });
+        });
 
-        // Rebuild new part's sentences from the DOM
-        const newSec = dchartSections.find(s => s.part === newPart);
-        if (newSec) {
-          newSec.sentences = readSentenceList(newUl);
-          console.log(`Updated sentences in "${newPart}":`, newSec.sentences.map(s => s.id));
-        }
+        // Clear old data
+        dchartSections.forEach(sec => {
+          sec.sentences = [];
+        });
+
+        // Re-read DOM in new order
+        const container = document.getElementById("sectionContainer");
+        const partDivs = Array.from(container.querySelectorAll(".dchart-section"));
+        partDivs.forEach(div => {
+          const partLabel = div.dataset.part;
+          const section = dchartSections.find(s => s.part === partLabel);
+          if (!section) return;
+
+          const ulEl = div.querySelector(".sentence-list");
+          const liArray = Array.from(ulEl.children).filter(child => child.matches("li[data-id]"));
+          liArray.forEach(li => {
+            const id = li.dataset.id;
+            if (sentenceMap[id]) {
+              section.sentences.push(sentenceMap[id]);
+            } else {
+              console.warn(`ID "${id}" not found in dictionary. Possibly new?`);
+              section.sentences.push({ id, text: li.innerText });
+            }
+          });
+        });
+
+        // Rebuild
+        buildSections();
       }
     });
   });
   attachDropdownLogic();
 }
 
-/** Convert the <li> elements back into an array of {id, text} by reading data-id. */
-function readSentenceList(ul) {
-  const liArray = Array.from(ul.querySelectorAll("li"));
-  const out = [];
-  liArray.forEach(li => {
-    const id = li.dataset.id;
-    if (!id) {
-      console.warn("Found <li> without data-id:", li);
-      return;
-    }
-    const found = findSentenceById(id);
-    if (found) out.push(found);
-    else console.warn(`Sentence with ID "${id}" not found.`);
-  });
-  return out;
-}
-
-/** Finds a sentence object by ID in all sections. */
-function findSentenceById(id) {
-  for (const sec of dchartSections) {
-    const s = sec.sentences.find(x => x.id === id);
-    if (s) return s;
-  }
-  return null;
-}
-
-/** Initialize custom dropdown logic (arrow keys, etc.). */
+/** 
+ * Attach dropdown logic for placeholders (like [customDropdown:IV Size]), 
+ * so that focusing shows a suggestion list, arrow keys, etc.
+ */
 function attachDropdownLogic() {
   document.querySelectorAll(".custom-dropdown").forEach((dropdown) => {
     const input = dropdown.querySelector(".custom-dropdown-input");
@@ -738,8 +894,9 @@ function attachDropdownLogic() {
   });
 }
 
-/** Generate final text by reading each part's sentences in DOM order
- *  and substituting placeholders with the UI's .inline-field values.
+/** 
+ * Generate final text by reading each section & sentence from the DOM order 
+ * and substituting placeholders with user-typed values. 
  */
 document.getElementById("generateBtn").addEventListener("click", () => {
   const finalText = generateFinalText();
@@ -754,28 +911,25 @@ document.getElementById("generateBtn").addEventListener("click", () => {
 });
 
 function generateFinalText() {
-  // Ensure we store the latest typed values
-  storeAllInlineValues();
+  storeAllInlineValues(); // ensure placeholders are up to date
 
   const includeSectionTitles = document.getElementById("toggleSectionTitles").checked;
-  
   let output = "";
   const container = document.getElementById("sectionContainer");
   const partDivs = Array.from(container.querySelectorAll(".dchart-section"));
 
-  // For each part in DOM order
-  partDivs.forEach((div) => {
+  partDivs.forEach(div => {
     const partLabel = div.dataset.part;
-    const ul = div.querySelector(".sentence-list");
-
-    // If this section includes the title and global toggle is on, add it
     const sectionConfig = dchartSections.find(s => s.part === partLabel);
+
+    // Optionally add section title
     if (sectionConfig && sectionConfig.includeTitle && includeSectionTitles) {
       output += partLabel + ":\n";
     }
 
-    // for each li in the DOM order
-    const liArray = Array.from(ul.querySelectorAll("li"));
+    // Grab each sentence <li>, find its data object, and fill placeholders
+    const ul = div.querySelector(".sentence-list");
+    const liArray = Array.from(ul.children).filter(child => child.matches("li[data-id]"));
     liArray.forEach(li => {
       const sentenceId = li.dataset.id;
       const sentenceObj = findSentenceById(sentenceId);
@@ -792,7 +946,10 @@ function generateFinalText() {
         placeholderIndex++;
         return val;
       });
+
+      // Remove any <br> from the final text
       replaced = replaced.replace(/<br\s*\/?>/gi, "");
+
       if (replaced) {
         output += replaced + " ";
       }
@@ -804,10 +961,12 @@ function generateFinalText() {
   return output.trim();
 }
 
-/** Copy final text to clipboard. */
+/** 
+ * Copy final text to clipboard 
+ */
 document.getElementById("copyBtn").addEventListener("click", () => {
   const finalTextArea = document.getElementById("finalText");
-  if (!finalTextArea.value) {
+  if (!finalTextArea.value.trim()) {
     alert("Nothing to copy! Generate the text first.");
     return;
   }
@@ -821,11 +980,23 @@ document.getElementById("copyBtn").addEventListener("click", () => {
     });
 });
 
-// Initialize the application once the DOM is fully loaded
+/** 
+ * Once DOM is ready, build initial interface 
+ */
 document.addEventListener("DOMContentLoaded", () => {
-  initializeGlobalID();
   buildSections();
 });
+
+/** 
+ * Finds a sentence object by ID in all sections.
+ */
+function findSentenceById(id) {
+  for (const sec of dchartSections) {
+    const s = sec.sentences.find(x => x.id === id);
+    if (s) return s;
+  }
+  return null;
+}
 </script>
 </body>
 </html>
