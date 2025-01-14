@@ -186,6 +186,14 @@
       margin: .5rem 2rem;
       font-size: .8rem;
     }
+
+    #license {
+      font-size: 0.9rem;
+    }
+    #license a {
+      font-weight: bold;
+      color: var(--bs-alert-color)
+    }
   </style>
 </head>
 <body>
@@ -223,9 +231,15 @@
   <button id="copyBtn" class="btn btn-success mb-5">Copy to Clipboard</button>
 
   <!-- Disclaimer -->
-  <div class="alert alert-secondary py-1 text-center" role="alert">
+  <div id="disclaimer" class="alert alert-secondary py-1 text-center" role="alert">
     <strong>Disclaimer:</strong> No information is stored or sent to a server. 
     All data is stored in your browser's memory.
+  </div>
+  <div id="license" class="alert alert-light py-1 text-center" role="alert" xmlns:cc="http://creativecommons.org/ns#" xmlns:dct="http://purl.org/dc/terms/">
+    <a property="dct:title" rel="cc:attributionURL" href="https://xzero121.github.io/QuickChart/">QuickChart</a> by <span property="cc:attributionName">B. Brown, EMT-B</span> is licensed under 
+    <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/?ref=chooser-v1" target="_blank" rel="license noopener noreferrer" style="display:inline-block;">CC BY-NC-ND 4.0
+    <img style="height:1em!important;margin-left:3px;vertical-align:baseline;" src="https://mirrors.creativecommons.org/presskit/icons/cc.svg?ref=chooser-v1" alt=""><img style="height:1em!important;margin-left:3px;vertical-align:baseline;" src="https://mirrors.creativecommons.org/presskit/icons/by.svg?ref=chooser-v1" alt=""><img style="height:1em!important;margin-left:3px;vertical-align:baseline;" src="https://mirrors.creativecommons.org/presskit/icons/nc.svg?ref=chooser-v1" alt=""><img style="height:1em!important;margin-left:3px;vertical-align:baseline;" src="https://mirrors.creativecommons.org/presskit/icons/nd.svg?ref=chooser-v1" alt="">
+    </a>
   </div>
 </div>
 
@@ -236,10 +250,8 @@
 
 <script>
 /* 
-  We'll store each "common" sentence with three forms:
-  1) original   - the exact text with placeholders
-  2) display    - a shortened version for suggestions (like [IV Size])
-  3) searchable - an expanded placeholder version so searching "14G" or "IV" can match
+  rawCommonSentences: used to store the original sentences with all data needed for the placeholder to function in the DOM.
+  commonSentences: used to store the original sentences with the placeholders replaced with a shorter version for display.
 */
 
 // Regex for placeholders
@@ -264,9 +276,6 @@ const commonSentences = rawCommonSentences.map(s => ({
 
 /* 
   Fuse config: 
-  - We'll search across both "display" and "searchable"
-  - minMatchCharLength = 2, threshold = 0.01 => quite strict 
-  - ignoreLocation = true => doesn't matter where in the string it is 
 */
 const fuseOptions = {
   keys: ["display", "searchable"],
@@ -278,7 +287,7 @@ const fuseOptions = {
 const fuse = new Fuse(commonSentences, fuseOptions);
 
 /* 
-  Global custom dropdown options for placeholders like [customDropdown:IV Size].
+  Global custom dropdown options for placeholders.
   If inline options exist, they override these. 
 */
 const globalDropdownOptions = {
@@ -394,7 +403,7 @@ let dchartSections = [
         text: "Additional interventions were necessary to manage the patient’s condition due to [text:Additional Reason], and these included [text:Interventions]."
       },
       {
-        text: "The patient’s condition [customDropdown:Patient Condition] during transport.."
+        text: "The patient’s condition [customDropdown:Patient Condition] during transport."
       }
     ]
   },
