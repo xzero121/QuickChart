@@ -49,12 +49,9 @@
       position: relative;
       padding: 1rem 2rem 0.75rem 2.5rem;
     }
-    /* If an <li> has tabs, we add .has-tabs. 
-       Then for every .has-tabs except the first child, give extra top spacing. */
     .has-tabs:not(:first-child) {
       margin-top: 2.5rem;
     }
-
     .drag-handle {
       position: absolute;
       left: 0.5rem;
@@ -168,11 +165,9 @@
     .suggestions li.highlight {
       background-color: #e9ecef;
     }
-
-    /* Tab styling - placed above the li via absolute positioning */
     .tabs-container {
       position: absolute;
-      top: -1.7rem;  /* updated to line up properly */
+      top: -1.7rem;  
       left: 2.5rem; 
       display: flex;
       gap: 4px;
@@ -192,14 +187,12 @@
       border-bottom: 1px solid #fff;
       z-index: 2;
     }
-
     .tab-pane {
       display: none;
     }
     .tab-pane.active {
       display: block;
     }
-
     #license {
       font-size: 0.9rem;
     }
@@ -207,17 +200,24 @@
       font-weight: bold;
       color: var(--bs-alert-color)
     }
+    /* Capitalize the "NEW RUN" button text */
+    #newRunBtn {
+      font-variant: small-caps;
+    }
   </style>
 </head>
 <body>
 <div class="container">
   <div class="d-flex align-items-center justify-content-between mb-4">
     <h1 class="m-0">QuickChart</h1>
-    <div class="form-check form-switch">
-      <input class="form-check-input" type="checkbox" id="toggleSectionTitles" checked />
-      <label class="form-check-label" for="toggleSectionTitles">
-        Include Section Titles in Final Output
-      </label>
+    <div class="d-flex align-items-center">
+      <div class="form-check form-switch me-3">
+        <input class="form-check-input" type="checkbox" id="toggleSectionTitles" checked />
+        <label class="form-check-label" for="toggleSectionTitles">
+          Include Section Titles in Final Output
+        </label>
+      </div>
+      <button id="newRunBtn" class="btn btn-warning">New Run</button>
     </div>
   </div>
 
@@ -245,36 +245,46 @@
   </div>
 </div>
 
+<!-- Modal for confirmations -->
+<div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmationModalLabel"></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="confirmationModalBody"></div>
+      <div class="modal-footer d-flex align-items-center justify-content-between">
+        <div id="confirmationDisclaimer" class="text-muted small"></div>
+        <div>
+          <button type="button" class="btn btn-primary" id="confirmYesBtn">Yes</button>
+          <button type="button" class="btn btn-secondary" id="confirmNoBtn">No</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script
   src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
 ></script>
 
 <script>
-/* 
-  rawCommonSentences: used to store the original sentences with all data needed for the placeholder to function in the DOM.
-  commonSentences: used to store the original sentences with the placeholders replaced with a shorter version for display.
-*/
-
-// Regex for placeholders
 const placeholderRegex = /\[(text|number|dropdown|customDropdown):([^:\]]+)(?::([^:\]]+))?\]/g;
 
-/* Common sentences for the suggestion dropdown */
 const rawCommonSentences = [
   "The patient had [customDropdown:IV Size:14G,16G,18G,20G,22G,24G] IV placed in the [customDropdown:IV Location:left arm,right arm,left hand,right hand].",
   "The patient was on a ventilator [customDropdown:Ventilator Mode:AC,PC,PSV,CPAP] with the following settings: pressure control [number:Pressure], rate [number:Rate], FiO2 [number:FiO2], PEEP [number:PEEP], and tidal volume [number:Tidal Volume].",
   "The patient was [number:Rate]LPM O2 via [customDropdown:O2 Delivery Device:Nasal Cannula,High Flow Nasal Cannula,Simple Mask,Non-Rebreather Mask,CPAP,Venturi Mask].",
   "The patient's GCS was assessed as [number:GCS] ([number:GCS Eye],[number:GCS Verbal],[number:GCS Motor])."
 ];
-/* Convert raw common sentences to objects for Fuse.js */
+
 const commonSentences = rawCommonSentences.map(s => ({
   original: s,
   display: shortPlaceholderString(s),
   searchable: expandedPlaceholderString(s)
 }));
 
-/* 
-  Fuse config: 
-*/
 const fuseOptions = {
   keys: ["display", "searchable"],
   includeMatches: true,
@@ -284,22 +294,20 @@ const fuseOptions = {
 };
 const fuse = new Fuse(commonSentences, fuseOptions);
 
-/* 
-  Global custom dropdown options for placeholders.
-  If inline options exist, they override these. 
-*/
 const globalDropdownOptions = {
   "Unit #": ["Medic 5", "Medic 6"],
   "Gender": ["Male", "Female"],
   "Response Type": ["emergent", "non-emergent"],
   "Hospitalized / Evaluated": ["hospitalized", "evaluated"],
   "Mental Status": ["alert and oriented", "confused"],
-  "Method": ["sheet draw", "stand and pivot"],
+  "Method": ["sheet draw", "stand and pivot", "self ambulation"],
   "Assist Count": ["x1", "x2"],
   "Straps Count": ["x5"],
   "Patient Condition": ["improved", "did not change", "worsened"],
   "Transfer of Location": ["hospital bed"],
   "Sending Facility": ["Baptist Floyd", "Baptist Freestanding ER in Jeffersonville"],
+  "Receiving Facility": ["Baptist Floyd", "Baptist Health Louisville"],
+  // "Receiving Facility": ["Baptist Floyd", "Baptist Health Louisville", "Clark Memorial", "Jewish Hospital", "Norton Audubon", "Norton Brownsboro", "Norton Downtown", "Norton Women and Children's", "Norton Children's", "University of Louisville Hospital"],
   "Reason": ["higher level of care", "long term care"],
   "Medical Necessity": [
     "1: Patient was bed confined before and after transport",
@@ -324,8 +332,7 @@ const globalDropdownOptions = {
   ],
 };
 
-/* Our main data structure: D, C, H, A, R, T, M, Sign Off */
-let dchartSections = [
+const defaultDchartSections = [
   {
     part: "D",
     includeTitle: true,
@@ -337,10 +344,19 @@ let dchartSections = [
         text: "The response was [customDropdown:Response Type]."
       },
       {
-        text: "Upon arrival, the patient’s condition was [text:Initial Condition]."
+        text: "Upon arrival, the patient’s condition was [text:Initial Condition:Stable,Unstable]."
       },
       {
-        text: "No immediate intervention or additional resources were required."
+        tabs: [
+          {
+            title: "No Immediate Intervention",
+            text: "No immediate intervention or additional resources were required."
+          },
+          {
+            title: "Immediate Intervention",
+            text: "Immediate intervention was required due to [text:Reason for Intervention], and included [text:Intervention]."
+          }
+        ]
       }
     ]
   },
@@ -394,7 +410,16 @@ let dchartSections = [
         text: "The patient’s vital signs, along with any performed interventions, are detailed in the treatment section."
       },
       {
-        text: "Additional interventions were necessary to manage the patient’s condition due to [text:Additional Reason], and these included [text:Interventions]."
+        tabs: [
+          {
+            title: "No Interventions",
+            text: "No interventions were necessary to manage the patient's condition during transport."
+          },
+          {
+            title: "Interventions",
+            text: "Additional interventions were necessary to manage the patient’s condition due to [text:Additional Reason], and these included [text:Interventions]."
+          }
+        ]
       },
       {
         text: "The patient’s condition [customDropdown:Patient Condition] during transport."
@@ -406,13 +431,22 @@ let dchartSections = [
     includeTitle: true,
     sentences: [
       {
-        text: "The patient was transferred to the stretcher via [customDropdown:Method] with assistance [customDropdown:Assist Count], secured with [customDropdown:Straps Count] straps, and loaded into [customDropdown:Unit #], without complications."
+        tabs: [
+          {
+            title: "Option 1",
+            text: "The patient was transferred to the stretcher via [customDropdown:Method] with assistance [customDropdown:Assist Count], secured with [customDropdown:Straps Count] straps, and loaded into [customDropdown:Unit #], without complications."
+          },
+          {
+            title: "Option 2",
+            text: "The patient was transferred to the stretcher via [customDropdown:Method] with assistance of [customDropdown:Assist Count:EMS Crew x1,EMS Crew x2,EMS Crew x2 and Facility Staff x1,EMS Crew x2 and Facility Staff x2,EMS Crew x2 and Facility Staff x3,EMS Crew x2 and Facility Staff x4], secured to stretcher with all available straps and side rails raised, and loaded into [customDropdown:Unit #], without complications."
+          }
+        ]
       },
       {
-        text: "The patient was transported to [text:Receiving Facility]."
+        text: "The patient was transported to [customDropdown:Receiving Facility]."
       },
       {
-        text: "Upon arrival, the patient’s condition was [text:Arrival Condition]."
+        text: "Upon arrival, the patient’s condition was [text:Arrival Condition:stable,unstable]."
       },
       {
         text: "The patient was transferred to [customDropdown:Transfer of Location] via [customDropdown:Method] with assistance [customDropdown:Assist Count], without complications."
@@ -463,18 +497,20 @@ let dchartSections = [
   }
 ];
 
-/** 
- * Shortens placeholders (for suggestions) 
- */
+let dchartSections = JSON.parse(JSON.stringify(defaultDchartSections));
+
+function resetAll() {
+  dchartSections = JSON.parse(JSON.stringify(defaultDchartSections));
+  buildSections();
+  document.getElementById("finalText").value = "";
+}
+
 function shortPlaceholderString(sentence) {
   return sentence.replace(placeholderRegex, (match, type, label) => {
     return `[${label}]`;
   });
 }
 
-/** 
- * Expands placeholders so searching "14G" or "IV Size" will match 
- */
 function expandedPlaceholderString(sentence) {
   return sentence.replace(placeholderRegex, (match, theType, label, opts) => {
     if (!opts) {
@@ -484,9 +520,6 @@ function expandedPlaceholderString(sentence) {
   });
 }
 
-/**
- * Assign IDs to each sentence & set up tab arrays
- */
 function assignDynamicIDs() {
   let counter = 1;
   dchartSections.forEach(section => {
@@ -504,9 +537,6 @@ function assignDynamicIDs() {
   });
 }
 
-/** 
- * Store user-typed field values from the DOM back into our main data 
- */
 function storeAllInlineValues() {
   dchartSections.forEach(section => {
     section.sentences.forEach(sentenceObj => {
@@ -536,7 +566,6 @@ function storeAllInlineValues() {
   });
 }
 
-/** Build the UI dynamically */
 function buildSections() {
   storeAllInlineValues();
   assignDynamicIDs();
@@ -549,7 +578,6 @@ function buildSections() {
     sectionDiv.classList.add("dchart-section");
     sectionDiv.dataset.part = secObj.part;
 
-    // Section header
     const header = document.createElement("div");
     header.classList.add("section-header");
     const titleEl = document.createElement("h5");
@@ -558,26 +586,21 @@ function buildSections() {
     header.appendChild(titleEl);
     sectionDiv.appendChild(header);
 
-    // Sentence list
     const ul = document.createElement("ul");
     ul.classList.add("sentence-list");
     ul.dataset.part = secObj.part;
 
-    // Build each sentence
-    secObj.sentences.forEach((sentenceObj, index) => {
+    secObj.sentences.forEach((sentenceObj) => {
       const li = document.createElement("li");
       li.dataset.id = sentenceObj.id;
 
-      // Drag handle
       const handle = document.createElement("span");
       handle.classList.add("drag-handle");
       handle.innerHTML = "&#9776;";
       li.appendChild(handle);
 
-      // If tabs exist, add the .has-tabs class
       if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
         li.classList.add("has-tabs");
-
         const tabsContainer = document.createElement("div");
         tabsContainer.classList.add("tabs-container");
 
@@ -597,7 +620,6 @@ function buildSections() {
         });
         li.appendChild(tabsContainer);
 
-        // Build tab content
         sentenceObj.tabs.forEach((tab, i) => {
           const tabPane = document.createElement("div");
           tabPane.classList.add("tab-pane");
@@ -608,13 +630,10 @@ function buildSections() {
           tabPane.innerHTML = buildInlineFieldsForTab(sentenceObj, i);
           li.appendChild(tabPane);
         });
-
       } else {
-        // Normal single text
         li.innerHTML += buildInlineFields(sentenceObj.text, sentenceObj.values);
       }
 
-      // Remove button
       const removeBtn = document.createElement("button");
       removeBtn.classList.add("remove-sentence-btn");
       removeBtn.type = "button";
@@ -622,10 +641,16 @@ function buildSections() {
       removeBtn.title = "Remove this sentence";
       removeBtn.addEventListener("click", (e) => {
         e.stopPropagation();
-        if (confirm("Remove this sentence?")) {
-          removeSentence(secObj.part, sentenceObj.id);
-          buildSections();
-        }
+        showConfirmationModal(
+          "Remove this sentence?",
+          "Are you sure you want to remove this sentence?",
+          "",
+          () => {
+            removeSentence(secObj.part, sentenceObj.id);
+            buildSections();
+          },
+          () => {}
+        );
       });
       li.appendChild(removeBtn);
 
@@ -634,7 +659,6 @@ function buildSections() {
 
     sectionDiv.appendChild(ul);
 
-    // "Add new sentence" form
     const form = document.createElement("form");
     form.classList.add("add-item-form");
     form.dataset.part = secObj.part;
@@ -671,7 +695,6 @@ function buildSections() {
       }
     });
 
-    // Fuse suggestions
     input.addEventListener("input", () => {
       const query = input.value.trim();
       if (!query) {
@@ -699,7 +722,6 @@ function buildSections() {
       suggestionsBox.style.display = "block";
     });
 
-    // Hide suggestions on blur
     input.addEventListener("blur", () => {
       setTimeout(() => {
         suggestionsBox.style.display = "none";
@@ -714,7 +736,6 @@ function buildSections() {
   attachDropdownLogic();
 }
 
-/** Remove a sentence by ID from a given part */
 function removeSentence(partLabel, sentenceId) {
   const section = dchartSections.find(s => s.part === partLabel);
   if (!section) {
@@ -729,7 +750,6 @@ function removeSentence(partLabel, sentenceId) {
   section.sentences.splice(idx, 1);
 }
 
-/** Build inline placeholders for normal (single) text sentences */
 function buildInlineFields(text, valuesArray) {
   let placeholderIndex = 0;
   const cleanText = text.replace(/<br\s*\/?>/gi, "");
@@ -813,14 +833,12 @@ function buildInlineFields(text, valuesArray) {
   });
 }
 
-/** Build inline placeholders for a particular tab of a multi-tab sentence */
 function buildInlineFieldsForTab(sentenceObj, tabIndex) {
   const tabContent = sentenceObj.tabs[tabIndex].text || "";
   const tabValuesArray = sentenceObj.tabValues[tabIndex] || [];
   return buildInlineFields(tabContent, tabValuesArray);
 }
 
-/** Draggable reordering with SortableJS */
 function makeSentencesDraggable() {
   const lists = document.querySelectorAll(".sentence-list");
   lists.forEach(ul => {
@@ -836,11 +854,9 @@ function makeSentencesDraggable() {
             sentenceMap[sent.id] = sent;
           });
         });
-        // Clear existing arrays
         dchartSections.forEach(sec => {
           sec.sentences = [];
         });
-        // Rebuild in new order
         const container = document.getElementById("sectionContainer");
         const partDivs = Array.from(container.querySelectorAll(".dchart-section"));
         partDivs.forEach(div => {
@@ -866,7 +882,6 @@ function makeSentencesDraggable() {
   attachDropdownLogic();
 }
 
-/** Attach custom dropdown logic for placeholders */
 function attachDropdownLogic() {
   document.querySelectorAll(".custom-dropdown").forEach((dropdown) => {
     const input = dropdown.querySelector(".custom-dropdown-input");
@@ -931,16 +946,23 @@ function attachDropdownLogic() {
   });
 }
 
-/** Generate final text */
 document.getElementById("generateBtn").addEventListener("click", () => {
-  const finalText = generateFinalText();
   const finalTextArea = document.getElementById("finalText");
   if (finalTextArea.value.trim()) {
-    if (!confirm("This will override the current final narrative. Continue?")) {
-      return;
-    }
+    showConfirmationModal(
+      "Generate Final Text",
+      "This will override the current final narrative. Continue?",
+      "",
+      () => {
+        const finalText = generateFinalText();
+        finalTextArea.value = finalText;
+      },
+      () => {}
+    );
+  } else {
+    const finalText = generateFinalText();
+    finalTextArea.value = finalText;
   }
-  finalTextArea.value = finalText;
 });
 
 function generateFinalText() {
@@ -953,7 +975,6 @@ function generateFinalText() {
   partDivs.forEach(div => {
     const partLabel = div.dataset.part;
     const sectionConfig = dchartSections.find(s => s.part === partLabel);
-
     if (sectionConfig && sectionConfig.includeTitle && includeSectionTitles) {
       output += partLabel + ":\n";
     }
@@ -967,7 +988,6 @@ function generateFinalText() {
         return;
       }
       if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
-        // If tabs exist, use the active tab
         const activeTab = sentenceObj.tabs[sentenceObj.activeTabIndex];
         let placeholderIndex = 0;
         let replaced = activeTab.text.replace(placeholderRegex, () => {
@@ -983,7 +1003,6 @@ function generateFinalText() {
           output += replaced + " ";
         }
       } else {
-        // Single text scenario
         let placeholderIndex = 0;
         let replaced = sentenceObj.text.replace(placeholderRegex, () => {
           const val = sentenceObj.values && sentenceObj.values[placeholderIndex]
@@ -1003,7 +1022,6 @@ function generateFinalText() {
   return output.trim();
 }
 
-/** Utility to find a sentence object by ID */
 function findSentenceById(id) {
   for (const sec of dchartSections) {
     const s = sec.sentences.find(x => x.id === id);
@@ -1012,27 +1030,77 @@ function findSentenceById(id) {
   return null;
 }
 
-/** Copy final text to clipboard */
 document.getElementById("copyBtn").addEventListener("click", () => {
   const finalTextArea = document.getElementById("finalText");
   if (!finalTextArea.value.trim()) {
-    alert("Nothing to copy! Generate the text first.");
+    showConfirmationModal(
+      "Copy to Clipboard",
+      "Nothing to copy! Generate the text first.",
+      "",
+      () => {},
+      () => {}
+    );
     return;
   }
   navigator.clipboard.writeText(finalTextArea.value)
     .then(() => {
-      alert("Copied to clipboard!");
+      showConfirmationModal(
+        "Copy to Clipboard",
+        "The final narrative has been copied to the clipboard.<br><br>Would you like to start a new run?",
+        "This will not affect the clipboard.",
+        () => resetAll(),
+        () => {}
+      );
     })
     .catch((err) => {
       console.error("Could not copy text: ", err);
-      alert("Failed to copy text.");
+      showConfirmationModal(
+        "Copy Failed",
+        "Failed to copy text to clipboard.",
+        "",
+        () => {},
+        () => {}
+      );
     });
 });
 
-/** Once DOM is ready, build the interface */
 document.addEventListener("DOMContentLoaded", () => {
   buildSections();
 });
+
+document.getElementById("newRunBtn").addEventListener("click", () => {
+  showConfirmationModal(
+    "New Run",
+    "Would you like to start a new run?",
+    "This will not affect the clipboard.",
+    () => resetAll(),
+    () => {}
+  );
+});
+
+function showConfirmationModal(title, message, disclaimer, callbackYes, callbackNo) {
+  const modalLabel = document.getElementById("confirmationModalLabel");
+  const modalBody = document.getElementById("confirmationModalBody");
+  const modalDisclaimer = document.getElementById("confirmationDisclaimer");
+  const yesBtn = document.getElementById("confirmYesBtn");
+  const noBtn = document.getElementById("confirmNoBtn");
+  
+  modalLabel.textContent = title || "";
+  modalBody.innerHTML = message || "";
+  modalDisclaimer.textContent = disclaimer || "";
+  
+  yesBtn.onclick = () => {
+    bootstrap.Modal.getInstance(document.getElementById("confirmationModal")).hide();
+    if (callbackYes) callbackYes();
+  };
+  noBtn.onclick = () => {
+    bootstrap.Modal.getInstance(document.getElementById("confirmationModal")).hide();
+    if (callbackNo) callbackNo();
+  };
+
+  const modal = new bootstrap.Modal(document.getElementById("confirmationModal"));
+  modal.show();
+}
 </script>
 </body>
 </html>
