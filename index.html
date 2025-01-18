@@ -312,6 +312,7 @@ const globalDropdownOptions = {
   "Mental Status": ["alert and oriented", "confused"],
   "Method": ["sheet draw", "stand and pivot", "self ambulation"],
   "Assist Count": ["x1", "x2"],
+  "Assistance Info": ["EMS Crew x1","EMS Crew x2","EMS Crew x2 and Facility Staff x1","EMS Crew x2 and Facility Staff x2","EMS Crew x2 and Facility Staff x3","EMS Crew x2 and Facility Staff x4"]
   "Straps Count": ["x5"],
   "Patient Condition": ["improved", "did not change", "worsened"],
   "Transfer of Location": ["hospital bed"],
@@ -448,7 +449,7 @@ const defaultDchartSections = [
           },
           {
             title: "Option 2",
-            text: "The patient was transferred to the stretcher via [customDropdown:Method] with assistance of [customDropdown:Assist Count:EMS Crew x1,EMS Crew x2,EMS Crew x2 and Facility Staff x1,EMS Crew x2 and Facility Staff x2,EMS Crew x2 and Facility Staff x3,EMS Crew x2 and Facility Staff x4], secured to stretcher with all available straps and side rails raised, and loaded into [customDropdown:Unit #], without complications."
+            text: "The patient was transferred to the stretcher via [customDropdown:Method] with assistance of [customDropdown:Assistance Info], secured to stretcher with all available straps and side rails raised, and loaded into [customDropdown:Unit #], without complications."
           }
         ]
       },
@@ -459,7 +460,16 @@ const defaultDchartSections = [
         text: "Upon arrival, the patient’s condition was [text:Arrival Condition:stable,unstable]."
       },
       {
-        text: "The patient was transferred to [customDropdown:Transfer of Location] via [customDropdown:Method] with assistance [customDropdown:Assist Count], without complications."
+        tabs: [
+          {
+            title: "Option 1",
+            text: "The patient was transferred to [customDropdown:Transfer of Location] via [customDropdown:Method] with assistance [customDropdown:Assist Count], without complications."
+          },
+          {
+            title: "Option 2",
+            text: "The patient was transferred to [customDropdown:Transfer of Location] via [customDropdown:Method] with assistance of [customDropdown:Assistance Info], without complications."
+          }
+        ]
       },
       {
         text: "A full report was provided to [text:Receiving Provider]."
