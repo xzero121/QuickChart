@@ -308,7 +308,7 @@ const globalDropdownOptions = {
   "Medical Necessity": [
     "1: Patient was bed confined before and after transport",
     "2: Patient required Cardiac / Hemodynamic monitoring during transport",
-    "3: Patient is confused, combatative, lethargic, or comatose",
+    "3: Patient is confused, combative, lethargic, or comatose",
     "4: Patient has contractures",
     "5: Patient is a danger to self or others - requires monitoring",
     "6: Patient has DVT required elevation of lower extremity",
@@ -326,6 +326,7 @@ const globalDropdownOptions = {
     "18: Patient is unable to sit in chair or wheelchair due to decubitus ulcer",
     "19: Patient requires transfer for higher level of care; First hospital lacks equipment / sercives"
   ],
+  "Reason": ["altered mental status", "language barrier", "being unconscious", "being blind", "being a minor"],
 };
 
 /**
@@ -335,7 +336,8 @@ const rawCommonSentences = [
   "The patient had [customDropdown:IV Size:14G,16G,18G,20G,22G,24G] IV placed in the [customDropdown:IV Location:left arm,right arm,left hand,right hand].",
   "The patient was on a ventilator [customDropdown:Ventilator Mode:AC,PC,PSV,CPAP] with the following settings: pressure control [number:Pressure], rate [number:Rate], FiO2 [number:FiO2], PEEP [number:PEEP], and tidal volume [number:Tidal Volume].",
   "The patient was [number:Rate]LPM O2 via [customDropdown:O2 Delivery Device:Nasal Cannula,High Flow Nasal Cannula,Simple Mask,Non-Rebreather Mask,CPAP,Venturi Mask].",
-  "The patient's GCS was assessed as [number:GCS] ([number:GCS Eye],[number:GCS Verbal],[number:GCS Motor])."
+  "The patient's GCS was assessed as [number:GCS] ([number:GCS Eye],[number:GCS Verbal],[number:GCS Motor]).",
+  "[text:person] signed on behalf of patient due to the patient being unable to sign due to [customDropdown:Reason]"
 ];
 
 /**
