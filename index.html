@@ -114,9 +114,8 @@
       cursor: pointer;
       border-bottom: 1px solid #eee;
     }
-    .suggestions-box li:hover,
-    .suggestions-box li.highlight {
-      background-color: #e9ecef;
+    .suggestions-box li:hover {
+      background-color: #f2f2f2;
     }
     .inline-field {
       display: inline-block;
@@ -165,6 +164,16 @@
     .suggestions li:hover,
     .suggestions li.highlight {
       background-color: #e9ecef;
+    }
+
+    .highlight {
+      background-color: #007bff;
+      color: #fff;
+    }
+
+    .alert-warning {
+      margin: .5rem 2rem;
+      font-size: .8rem;
     }
     .tabs-container {
       position: absolute;
@@ -271,23 +280,14 @@
 ></script>
 
 <script>
-/**
- * Regex to match placeholders:
- *  [text:Label]
- *  [number:Label]
- *  [dropdown:Label:Option1,Option2,etc]
- *  [customDropdown:Label:Option1,Option2,etc]
- */
 const placeholderRegex = /\[(text|number|dropdown|customDropdown):([^:\]]+)(?::([^:\]]+))?\]/g;
 
-/** Data placeholders we will fetch from default.json */
 let rawCommonSentences = [];
 let commonSentences = [];
 let globalDropdownOptions = {};
 let defaultDchartSections = [];
 let dchartSections = [];
 
-/** For fuzzy searching the "common sentences" */
 let fuse;
 const fuseOptions = {
   keys: ["display", "searchable"],
@@ -297,55 +297,43 @@ const fuseOptions = {
   ignoreLocation: true
 };
 
-/**
- * Called once DOM is loaded, and we then fetch the default.json file
- * to populate the data
- */
 document.addEventListener("DOMContentLoaded", async () => {
   try {
     const response = await fetch("default.json");
     const data = await response.json();
 
-    // Merge the fetched data
     rawCommonSentences = data.commonSentences || [];
     globalDropdownOptions = data.globalDropdownOptions || {};
     defaultDchartSections = data.dchartSections || [];
 
-    // Initialize commonSentences
     commonSentences = rawCommonSentences.map((s) => ({
       original: s,
       display: shortPlaceholderString(s),
       searchable: expandedPlaceholderString(s),
     }));
 
-    // Initialize Fuse for searching
     fuse = new Fuse(commonSentences, fuseOptions);
 
-    // Clone the default sections into the working array
     dchartSections = JSON.parse(JSON.stringify(defaultDchartSections));
 
-    // Finally, build the UI
     buildSections();
   } catch (err) {
     console.error("Failed to load default.json", err);
   }
 });
 
-/** Resets everything back to the default data and rebuilds the UI */
 function resetAll() {
   dchartSections = JSON.parse(JSON.stringify(defaultDchartSections));
   buildSections();
   document.getElementById("finalText").value = "";
 }
 
-/** Helper to create shorter version of placeholders for display in suggestion box */
 function shortPlaceholderString(sentence) {
   return sentence.replace(placeholderRegex, (match, type, label) => {
     return `[${label}]`;
   });
 }
 
-/** Helper to create an expanded placeholder string (for better search results) */
 function expandedPlaceholderString(sentence) {
   return sentence.replace(placeholderRegex, (match, theType, label, opts) => {
     if (!opts) {
@@ -355,15 +343,8 @@ function expandedPlaceholderString(sentence) {
   });
 }
 
-/** 
- * Rebuilds the entire DCHART UI from the dchartSections data structure. 
- * Ensures that any existing inline field values are stored before rebuild.
- */
 function buildSections() {
-  // first store user inputs so we don't lose them
   storeAllInlineValues();
-
-  // Reassign IDs in case user re-ordered sections or added new lines
   assignDynamicIDs();
 
   const container = document.getElementById("sectionContainer");
@@ -374,7 +355,6 @@ function buildSections() {
     sectionDiv.classList.add("dchart-section");
     sectionDiv.dataset.part = secObj.part;
 
-    // Section Header
     const header = document.createElement("div");
     header.classList.add("section-header");
     const titleEl = document.createElement("h5");
@@ -383,7 +363,6 @@ function buildSections() {
     header.appendChild(titleEl);
     sectionDiv.appendChild(header);
 
-    // Sentence list
     const ul = document.createElement("ul");
     ul.classList.add("sentence-list");
     ul.dataset.part = secObj.part;
@@ -397,14 +376,11 @@ function buildSections() {
       handle.innerHTML = "&#9776;";
       li.appendChild(handle);
 
-      // If we have tabs
       if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
-        // This sentence is a "tabbed" group
         li.classList.add("has-tabs");
         const tabsContainer = document.createElement("div");
         tabsContainer.classList.add("tabs-container");
 
-        // Create each tab button
         sentenceObj.tabs.forEach((tab, i) => {
           const tabBtn = document.createElement("div");
           tabBtn.classList.add("tab-button");
@@ -421,7 +397,6 @@ function buildSections() {
         });
         li.appendChild(tabsContainer);
 
-        // Create each tab pane
         sentenceObj.tabs.forEach((tab, i) => {
           const tabPane = document.createElement("div");
           tabPane.classList.add("tab-pane");
@@ -433,11 +408,9 @@ function buildSections() {
           li.appendChild(tabPane);
         });
       } else {
-        // Normal sentence
         li.innerHTML += buildInlineFields(sentenceObj.text, sentenceObj.values);
       }
 
-      // Remove-sentence button
       const removeBtn = document.createElement("button");
       removeBtn.classList.add("remove-sentence-btn");
       removeBtn.type = "button";
@@ -463,7 +436,6 @@ function buildSections() {
 
     sectionDiv.appendChild(ul);
 
-    // Form to add a new sentence
     const form = document.createElement("form");
     form.classList.add("add-item-form");
     form.dataset.part = secObj.part;
@@ -491,7 +463,6 @@ function buildSections() {
     form.appendChild(groupDiv);
     form.appendChild(suggestionsBox);
 
-    // Handle manual sentence addition
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       const newText = input.value.trim();
@@ -499,23 +470,17 @@ function buildSections() {
         secObj.sentences.push({ text: newText });
         buildSections();
       }
-      input.value = "";
-      suggestionsBox.style.display = "none";
     });
 
-    // Handle suggestions from the commonSentences via fuse
     input.addEventListener("input", () => {
       const query = input.value.trim();
       if (!query) {
         suggestionsBox.style.display = "none";
-        fuseResults = [];
-        focusedIndex = -1;
         return;
       }
-      fuseResults = fuse.search(query);
+      const fuseResults = fuse.search(query);
       if (fuseResults.length === 0) {
         suggestionsBox.style.display = "none";
-        focusedIndex = -1;
         return;
       }
       const ulEl = suggestionsBox.querySelector("ul");
@@ -532,39 +497,8 @@ function buildSections() {
         ulEl.appendChild(li);
       });
       suggestionsBox.style.display = "block";
-      focusedIndex = -1;
     });
 
-    // Arrow key navigation for suggestions
-    input.addEventListener("keydown", (e) => {
-      const listEl = suggestionsBox.querySelector("ul");
-      if (!listEl) return;
-      const items = Array.from(listEl.querySelectorAll("li"));
-      if (items.length === 0) return;
-
-      if (e.key === "ArrowDown") {
-        e.preventDefault();
-        focusedIndex = (focusedIndex + 1) % items.length;
-        highlightSuggestion(items, focusedIndex);
-      }
-      else if (e.key === "ArrowUp") {
-        e.preventDefault();
-        focusedIndex = (focusedIndex - 1 + items.length) % items.length;
-        highlightSuggestion(items, focusedIndex);
-      }
-      else if (e.key === "Enter") {
-        e.preventDefault();
-        if (focusedIndex >= 0 && focusedIndex < items.length) {
-          // "Click" the highlighted item
-          items[focusedIndex].click();
-        }
-      }
-      else if (e.key === "Escape") {
-        suggestionsBox.style.display = "none";
-      }
-    });
-
-    // Hide suggestions on blur
     input.addEventListener("blur", () => {
       setTimeout(() => {
         suggestionsBox.style.display = "none";
@@ -575,15 +509,10 @@ function buildSections() {
     container.appendChild(sectionDiv);
   });
 
-  // Make the sentences sortable across sections
   makeSentencesDraggable();
-  // Activate the custom dropdown logic
   attachDropdownLogic();
 }
 
-/**
- * Loops through each section's sentences and ensures every sentence has a unique ID.
- */
 function assignDynamicIDs() {
   let counter = 1;
   dchartSections.forEach((section) => {
@@ -592,11 +521,9 @@ function assignDynamicIDs() {
         sentenceObj.id = "sentence-" + counter++;
       }
       if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
-        // default active tab
         if (typeof sentenceObj.activeTabIndex === "undefined") {
           sentenceObj.activeTabIndex = 0;
         }
-        // store tab-specific values
         if (!sentenceObj.tabValues || !Array.isArray(sentenceObj.tabValues)) {
           sentenceObj.tabValues = sentenceObj.tabs.map(() => []);
         }
@@ -605,17 +532,12 @@ function assignDynamicIDs() {
   });
 }
 
-/**
- * Collects current text/number dropdown values from inline fields in the DOM
- * and saves them back into dchartSections so they persist after rebuild.
- */
 function storeAllInlineValues() {
   dchartSections.forEach((section) => {
     section.sentences.forEach((sentenceObj) => {
       const li = document.querySelector(`li[data-id="${sentenceObj.id}"]`);
       if (!li) return;
 
-      // If sentence has tabs, gather values from the active tab
       if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
         sentenceObj.tabs.forEach((tab, tabIndex) => {
           const tabPane = li.querySelector(`.tab-pane[data-tab-index="${tabIndex}"]`);
@@ -626,7 +548,6 @@ function storeAllInlineValues() {
           });
         });
       } else {
-        // Simple sentence
         const fields = Array.from(li.querySelectorAll(".inline-field:not(.tab-pane .inline-field)"));
         if (!sentenceObj.values) {
           sentenceObj.values = [];
@@ -639,9 +560,6 @@ function storeAllInlineValues() {
   });
 }
 
-/**
- * Removes a sentence from a specific DCHART part.
- */
 function removeSentence(partLabel, sentenceId) {
   const section = dchartSections.find((s) => s.part === partLabel);
   if (!section) {
@@ -656,9 +574,6 @@ function removeSentence(partLabel, sentenceId) {
   section.sentences.splice(idx, 1);
 }
 
-/**
- * Builds inline fields for placeholders in a standard (non-tabbed) sentence.
- */
 function buildInlineFields(text, valuesArray) {
   let placeholderIndex = 0;
   const cleanText = text.replace(/<br\s*\/?>/gi, "");
@@ -667,18 +582,16 @@ function buildInlineFields(text, valuesArray) {
     placeholderIndex++;
 
     let optsArray = [];
-    // If options (like "14G,16G,18G") are present, split them
     if (options) {
       optsArray = options.split(",").map((x) => x.trim());
-    } 
-    // Or if a globalDropdownOptions entry exists, use it
-    else if (globalDropdownOptions[label]) {
+    } else if (globalDropdownOptions[label]) {
       optsArray = globalDropdownOptions[label];
     }
 
-    // Create the appropriate input or custom dropdown UI
     if (type === "customDropdown") {
-      const listItems = optsArray.map(opt => `<li>${opt}</li>`).join("");
+      const listItems = optsArray
+        .map((opt) => `<li class="list-group-item">${opt}</li>`)
+        .join("");
       return `
         <div class="custom-dropdown">
           <input
@@ -690,9 +603,7 @@ function buildInlineFields(text, valuesArray) {
             placeholder="${label}"
             value="${val}"
           />
-          <ul class="suggestions">
-            ${listItems}
-          </ul>
+          <ul class="suggestions">${listItems}</ul>
         </div>
       `;
     } else if (type === "dropdown") {
@@ -743,23 +654,16 @@ function buildInlineFields(text, valuesArray) {
       `;
     }
 
-    // fallback if none matched
     return match;
   });
 }
 
-/**
- * For a tabbed sentence, builds the placeholders in the active tab’s text.
- */
 function buildInlineFieldsForTab(sentenceObj, tabIndex) {
   const tabContent = sentenceObj.tabs[tabIndex].text || "";
   const tabValuesArray = sentenceObj.tabValues[tabIndex] || [];
   return buildInlineFields(tabContent, tabValuesArray);
 }
 
-/**
- * Enables drag-and-drop reordering across all .sentence-list elements.
- */
 function makeSentencesDraggable() {
   const lists = document.querySelectorAll(".sentence-list");
   lists.forEach((ul) => {
@@ -770,19 +674,16 @@ function makeSentencesDraggable() {
       onEnd: () => {
         storeAllInlineValues();
 
-        // gather up all the sentences in memory by ID
         const sentenceMap = {};
         dchartSections.forEach((sec) => {
           sec.sentences.forEach((sent) => {
             sentenceMap[sent.id] = sent;
           });
         });
-        // clear out each section
         dchartSections.forEach((sec) => {
           sec.sentences = [];
         });
 
-        // Re-populate dchartSections based on new DOM order
         const container = document.getElementById("sectionContainer");
         const partDivs = Array.from(container.querySelectorAll(".dchart-section"));
         partDivs.forEach((div) => {
@@ -796,7 +697,6 @@ function makeSentencesDraggable() {
             if (sentenceMap[id]) {
               section.sentences.push(sentenceMap[id]);
             } else {
-              // fallback if not found in dictionary
               section.sentences.push({ id, text: li.innerText });
             }
           });
@@ -805,14 +705,9 @@ function makeSentencesDraggable() {
       },
     });
   });
+  attachDropdownLogic();
 }
 
-/**
- * Attach logic to custom dropdowns so they filter as you type
- */
-/**
- * Attaches the logic for custom dropdowns: focusing, selecting, up/down arrows, etc.
- */
 function attachDropdownLogic() {
   document.querySelectorAll(".custom-dropdown").forEach((dropdown) => {
     const input = dropdown.querySelector(".custom-dropdown-input");
@@ -820,102 +715,85 @@ function attachDropdownLogic() {
     if (!input || !suggestionBox) return;
 
     let focusedIndex = -1;
-    let items = Array.from(suggestionBox.querySelectorAll("li"));
+    const items = Array.from(suggestionBox.querySelectorAll("li"));
 
-    // Show all items on focus
     input.addEventListener("focus", () => {
       suggestionBox.style.display = "block";
     });
 
-    // Filter suggestions on input
-    input.addEventListener("input", () => {
-      const val = input.value.toLowerCase();
-      items.forEach(li => {
-        if (li.textContent.toLowerCase().includes(val)) {
-          li.style.display = "block";
-        } else {
-          li.style.display = "none";
-        }
-      });
-      suggestionBox.style.display = "block";
-      focusedIndex = -1;
-      highlightItem(items, -1);
-    });
-
-    // Hide on blur
     input.addEventListener("blur", () => {
       setTimeout(() => {
         suggestionBox.style.display = "none";
-        clearHighlight(items);
+        clearHighlight();
       }, 150);
     });
 
-    // Clicking an item
     items.forEach((li, idx) => {
-      li.addEventListener("click", () => {
+      li.addEventListener("mousedown", () => {
         input.value = li.textContent.trim();
       });
     });
 
-    // Keyboard navigation
     input.addEventListener("keydown", (e) => {
-      switch (e.key) {
-        case "ArrowDown":
+      switch (e.keyCode) {
+        case 38: // up
           e.preventDefault();
-          doMove(1);
+          if (focusedIndex > 0) focusedIndex--;
+          else focusedIndex = items.length - 1;
+          highlight(focusedIndex);
           break;
-        case "ArrowUp":
+        case 40: // down
           e.preventDefault();
-          doMove(-1);
+          if (focusedIndex < items.length - 1) focusedIndex++;
+          else focusedIndex = 0;
+          highlight(focusedIndex);
           break;
-        case "Enter":
+        case 13: // enter
           e.preventDefault();
-          if (focusedIndex >= 0 && focusedIndex < items.length && items[focusedIndex].style.display !== "none") {
+          if (focusedIndex >= 0 && focusedIndex < items.length) {
             input.value = items[focusedIndex].textContent.trim();
           }
           suggestionBox.style.display = "none";
           input.blur();
           break;
-        case "Escape":
+        case 27: // esc
+          e.preventDefault();
           suggestionBox.style.display = "none";
-          clearHighlight(items);
+          clearHighlight();
           break;
       }
     });
 
-    function doMove(delta) {
-      // gather only visible items
-      const visibleItems = items.filter(li => li.style.display !== "none");
-      if (visibleItems.length === 0) return;
-      const currentVisibleIndex = visibleItems.indexOf(visibleItems.find(li => li.classList.contains("highlight")));
-      // If not found, we start from -1
-      let idx = currentVisibleIndex === -1 ? -1 : currentVisibleIndex;
-      idx += delta;
-      if (idx < 0) idx = visibleItems.length - 1;
-      if (idx >= visibleItems.length) idx = 0;
-      highlightItem(visibleItems, idx);
-    }
-
-    function highlightItem(list, index) {
-      list.forEach(li => li.classList.remove("highlight"));
-      if (index >= 0 && index < list.length) {
-        list[index].classList.add("highlight");
-        focusedIndex = items.indexOf(list[index]);
-      } else {
-        focusedIndex = -1;
+    function highlight(index) {
+      items.forEach((item) => item.classList.remove("highlight"));
+      if (index >= 0 && index < items.length) {
+        items[index].classList.add("highlight");
       }
     }
-
-    function clearHighlight(list) {
-      list.forEach(li => li.classList.remove("highlight"));
+    function clearHighlight() {
       focusedIndex = -1;
+      items.forEach((item) => item.classList.remove("highlight"));
     }
   });
 }
 
-/**
- * Generate final text
- */
+document.getElementById("generateBtn").addEventListener("click", () => {
+  const finalTextArea = document.getElementById("finalText");
+  if (finalTextArea.value.trim()) {
+    showConfirmationModal(
+      "Generate Final Text",
+      "This will override the current final narrative. Continue?",
+      "",
+      () => {
+        finalTextArea.value = generateFinalText();
+      },
+      () => {}
+    );
+  } else {
+    finalTextArea.value = generateFinalText();
+  }
+});
+
 function generateFinalText() {
   storeAllInlineValues();
   const includeSectionTitles = document.getElementById("toggleSectionTitles").checked;
@@ -940,7 +818,6 @@ function generateFinalText() {
         console.warn(`Sentence with ID "${sentenceId}" not found.`);
         return;
       }
-      // Tabbed sentence
       if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
         const activeTab = sentenceObj.tabs[sentenceObj.activeTabIndex];
         let placeholderIndex = 0;
@@ -958,7 +835,6 @@ function generateFinalText() {
           output += replaced + " ";
         }
       } else {
-        // Normal sentence
         let placeholderIndex = 0;
         let replaced = sentenceObj.text.replace(placeholderRegex, () => {
           const val =
@@ -981,7 +857,6 @@ function generateFinalText() {
   return output.trim();
 }
 
-/** Helper to find a sentence object by ID in dchartSections */
 function findSentenceById(id) {
   for (const sec of dchartSections) {
     const s = sec.sentences.find((x) => x.id === id);
@@ -989,26 +864,6 @@ function findSentenceById(id) {
   }
   return null;
 }
-
-/**
- * Button actions
- */
-document.getElementById("generateBtn").addEventListener("click", () => {
-  const finalTextArea = document.getElementById("finalText");
-  if (finalTextArea.value.trim()) {
-    showConfirmationModal(
-      "Generate Final Text",
-      "This will override the current final narrative. Continue?",
-      "",
-      () => {
-        finalTextArea.value = generateFinalText();
-      },
-      () => {}
-    );
-  } else {
-    finalTextArea.value = generateFinalText();
-  }
-});
 
 document.getElementById("copyBtn").addEventListener("click", () => {
   const finalTextArea = document.getElementById("finalText");
@@ -1045,7 +900,6 @@ document.getElementById("copyBtn").addEventListener("click", () => {
     });
 });
 
-/** New Run button handler */
 document.getElementById("newRunBtn").addEventListener("click", () => {
   showConfirmationModal(
     "New Run",
@@ -1056,9 +910,6 @@ document.getElementById("newRunBtn").addEventListener("click", () => {
   );
 });
 
-/**
- * Reusable function to show a simple confirmation modal with Yes/No.
- */
 function showConfirmationModal(title, message, disclaimer, callbackYes, callbackNo) {
   const modalLabel = document.getElementById("confirmationModalLabel");
   const modalBody = document.getElementById("confirmationModalBody");
@@ -1082,11 +933,6 @@ function showConfirmationModal(title, message, disclaimer, callbackYes, callback
   const modal = new bootstrap.Modal(document.getElementById("confirmationModal"));
   modal.show();
 }
-
-// Initialize on page load
-document.addEventListener("DOMContentLoaded", () => {
-  buildSections();
-});
 </script>
 </body>
 </html>
