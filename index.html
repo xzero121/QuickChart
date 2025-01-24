@@ -177,8 +177,8 @@
     }
     .tabs-container {
       position: absolute;
-      top: -1.7rem;  
-      left: 2.5rem; 
+      top: -1.7rem;
+      left: 2.5rem;
       display: flex;
       gap: 4px;
     }
@@ -299,6 +299,8 @@ const fuseOptions = {
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
+    // Load from default.json or your own data source.
+    // Make sure your data has at least one customDropdown placeholder if you want to see the filter in action.
     const response = await fetch("default.json");
     const data = await response.json();
 
@@ -319,6 +321,20 @@ document.addEventListener("DOMContentLoaded", async () => {
     buildSections();
   } catch (err) {
     console.error("Failed to load default.json", err);
+
+    // For testing, you can create a fallback section with a customDropdown example:
+    dchartSections = [
+      {
+        part: "Testing",
+        includeTitle: true,
+        sentences: [
+          {
+            text: "Patient prefers [customDropdown:Fruits:Apple,Banana,Cherry] to other fruits.",
+          }
+        ]
+      }
+    ];
+    buildSections();
   }
 });
 
@@ -436,6 +452,7 @@ function buildSections() {
 
     sectionDiv.appendChild(ul);
 
+    // FORM for adding new sentences
     const form = document.createElement("form");
     form.classList.add("add-item-form");
     form.dataset.part = secObj.part;
@@ -472,6 +489,7 @@ function buildSections() {
       }
     });
 
+    // Quick search from the commonSentences array (using Fuse.js)
     input.addEventListener("input", () => {
       const query = input.value.trim();
       if (!query) {
@@ -709,6 +727,7 @@ function makeSentencesDraggable() {
 }
 
 function attachDropdownLogic() {
+  // For each custom dropdown in the document, wire up real-time filtering logic
   document.querySelectorAll(".custom-dropdown").forEach((dropdown) => {
     const input = dropdown.querySelector(".custom-dropdown-input");
     const suggestionBox = dropdown.querySelector(".suggestions");
@@ -717,10 +736,12 @@ function attachDropdownLogic() {
     let focusedIndex = -1;
     const items = Array.from(suggestionBox.querySelectorAll("li"));
 
+    // When the user focuses on the input, filter and show if any item is relevant
     input.addEventListener("focus", () => {
-      suggestionBox.style.display = "block";
+      filterDropdown();
     });
 
+    // Hide the suggestion box on blur (with a small timeout to allow clicks)
     input.addEventListener("blur", () => {
       setTimeout(() => {
         suggestionBox.style.display = "none";
@@ -728,33 +749,25 @@ function attachDropdownLogic() {
       }, 150);
     });
 
-    items.forEach((li, idx) => {
-      li.addEventListener("mousedown", () => {
-        input.value = li.textContent.trim();
-      });
+    // If the user types in the custom dropdown, filter the visible items
+    input.addEventListener("input", () => {
+      filterDropdown();
     });
 
+    // Handle keyboard navigation
     input.addEventListener("keydown", (e) => {
       switch (e.keyCode) {
-        case 38: // up
+        case 38: // up arrow
           e.preventDefault();
-          if (focusedIndex > 0) focusedIndex--;
-          else focusedIndex = items.length - 1;
-          highlight(focusedIndex);
+          moveHighlightUp();
           break;
-        case 40: // down
+        case 40: // down arrow
           e.preventDefault();
-          if (focusedIndex < items.length - 1) focusedIndex++;
-          else focusedIndex = 0;
-          highlight(focusedIndex);
+          moveHighlightDown();
           break;
         case 13: // enter
           e.preventDefault();
-          if (focusedIndex >= 0 && focusedIndex < items.length) {
-            input.value = items[focusedIndex].textContent.trim();
-          }
-          suggestionBox.style.display = "none";
-          input.blur();
+          selectHighlighted();
           break;
         case 27: // esc
           e.preventDefault();
@@ -764,12 +777,73 @@ function attachDropdownLogic() {
       }
     });
 
-    function highlight(index) {
-      items.forEach((item) => item.classList.remove("highlight"));
-      if (index >= 0 && index < items.length) {
-        items[index].classList.add("highlight");
+    // Clicking on a suggestion sets the input value
+    items.forEach((li, idx) => {
+      li.addEventListener("mousedown", () => {
+        input.value = li.textContent.trim();
+      });
+    });
+
+    function filterDropdown() {
+      const filterValue = input.value.toLowerCase().trim();
+      let anyVisible = false;
+      items.forEach((li) => {
+        if (li.textContent.toLowerCase().includes(filterValue)) {
+          li.style.display = "";
+          anyVisible = true;
+        } else {
+          li.style.display = "none";
+        }
+      });
+      clearHighlight();
+      suggestionBox.style.display = anyVisible ? "block" : "none";
+    }
+
+    function moveHighlightUp() {
+      const visibleItems = getVisibleItems();
+      if (visibleItems.length === 0) return;
+      if (focusedIndex < 0) {
+        // nothing is highlighted yet, highlight last
+        focusedIndex = visibleItems.length - 1;
+      } else {
+        focusedIndex = (focusedIndex - 1 + visibleItems.length) % visibleItems.length;
+      }
+      highlightCurrent(visibleItems);
+    }
+
+    function moveHighlightDown() {
+      const visibleItems = getVisibleItems();
+      if (visibleItems.length === 0) return;
+      if (focusedIndex < 0) {
+        // nothing is highlighted yet, highlight first
+        focusedIndex = 0;
+      } else {
+        focusedIndex = (focusedIndex + 1) % visibleItems.length;
+      }
+      highlightCurrent(visibleItems);
+    }
+
+    function selectHighlighted() {
+      const visibleItems = getVisibleItems();
+      if (focusedIndex >= 0 && focusedIndex < visibleItems.length) {
+        input.value = visibleItems[focusedIndex].textContent.trim();
+      }
+      suggestionBox.style.display = "none";
+      clearHighlight();
+      input.blur();
+    }
+
+    function highlightCurrent(visibleItems) {
+      visibleItems.forEach((li) => li.classList.remove("highlight"));
+      if (focusedIndex >= 0 && focusedIndex < visibleItems.length) {
+        visibleItems[focusedIndex].classList.add("highlight");
       }
     }
+
+    function getVisibleItems() {
+      return items.filter((li) => li.style.display !== "none");
+    }
+
     function clearHighlight() {
       focusedIndex = -1;
       items.forEach((item) => item.classList.remove("highlight"));
