@@ -1041,7 +1041,7 @@ document.getElementById("loadJsonBtn").addEventListener("click", async () => {
     buildSections();
   } catch (err) {
     console.error(`Failed to load ${jsonFileName}`, err);
-    alert(`Failed to load ${jsonFileName}. Falling back to default.json.`);
+    alert(`Not Found! Please check the code and try again.`);
 
     // Fall back to default.json
     try {
