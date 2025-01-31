@@ -48,3 +48,5 @@ Disclaimer
 QuickChart is a tool to assist with documentation and is not a substitute for professional judgment or adherence to local protocols. Always ensure your narratives comply with your organization's guidelines and regulations.
 
 **Happy charting!**
+
+<a href="https://www.buymeacoffee.com/bbrown216" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" ></a>
