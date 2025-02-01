@@ -179,6 +179,8 @@
       position: absolute;
       top: -1.7rem;
       left: 2.5rem;
+      top: -1.7rem;
+      left: 2.5rem;
       display: flex;
       gap: 4px;
     }
@@ -361,6 +363,13 @@ let defaultDchartSections = [];
 let dchartSections = [];
 
 let fuse;
+let rawCommonSentences = [];
+let commonSentences = [];
+let globalDropdownOptions = {};
+let defaultDchartSections = [];
+let dchartSections = [];
+
+let fuse;
 const fuseOptions = {
   keys: ["display", "searchable"],
   includeMatches: true,
@@ -368,6 +377,33 @@ const fuseOptions = {
   minMatchCharLength: 2,
   ignoreLocation: true
 };
+
+document.addEventListener("DOMContentLoaded", async () => {
+  try {
+    // Load from default.json or your own data source.
+    // Make sure your data has at least one customDropdown placeholder if you want to see the filter in action.
+    const response = await fetch("default.json");
+    const data = await response.json();
+
+    rawCommonSentences = data.commonSentences || [];
+    globalDropdownOptions = data.globalDropdownOptions || {};
+    defaultDchartSections = data.dchartSections || [];
+
+    commonSentences = rawCommonSentences.map((s) => ({
+      original: s,
+      display: shortPlaceholderString(s),
+      searchable: expandedPlaceholderString(s),
+    }));
+
+    fuse = new Fuse(commonSentences, fuseOptions);
+
+    dchartSections = JSON.parse(JSON.stringify(defaultDchartSections));
+
+    buildSections();
+  } catch (err) {
+    console.error("Failed to load default.json", err);
+  }
+});
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
@@ -511,6 +547,7 @@ function buildSections() {
     sectionDiv.appendChild(ul);
 
     // FORM for adding new sentences
+    // FORM for adding new sentences
     const form = document.createElement("form");
     form.classList.add("add-item-form");
     form.dataset.part = secObj.part;
@@ -548,6 +585,7 @@ function buildSections() {
     });
 
     // Quick search from the commonSentences array (using Fuse.js)
+    // Quick search from the commonSentences array (using Fuse.js)
     input.addEventListener("input", () => {
       const query = input.value.trim();
       if (!query) {
@@ -561,6 +599,7 @@ function buildSections() {
       }
       const ulEl = suggestionsBox.querySelector("ul");
       ulEl.innerHTML = "";
+      fuseResults.forEach((res) => {
       fuseResults.forEach((res) => {
         const li = document.createElement("li");
         li.textContent = res.item.display;
@@ -636,12 +675,61 @@ function storeAllInlineValues() {
   });
 }
 
+function assignDynamicIDs() {
+  let counter = 1;
+  dchartSections.forEach((section) => {
+    section.sentences.forEach((sentenceObj) => {
+      if (!sentenceObj.id) {
+        sentenceObj.id = "sentence-" + counter++;
+      }
+      if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
+        if (typeof sentenceObj.activeTabIndex === "undefined") {
+          sentenceObj.activeTabIndex = 0;
+        }
+        if (!sentenceObj.tabValues || !Array.isArray(sentenceObj.tabValues)) {
+          sentenceObj.tabValues = sentenceObj.tabs.map(() => []);
+        }
+      }
+    });
+  });
+}
+
+function storeAllInlineValues() {
+  dchartSections.forEach((section) => {
+    section.sentences.forEach((sentenceObj) => {
+      const li = document.querySelector(`li[data-id="${sentenceObj.id}"]`);
+      if (!li) return;
+
+      if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
+        sentenceObj.tabs.forEach((tab, tabIndex) => {
+          const tabPane = li.querySelector(`.tab-pane[data-tab-index="${tabIndex}"]`);
+          if (!tabPane) return;
+          const fields = Array.from(tabPane.querySelectorAll(".inline-field"));
+          fields.forEach((field, idx) => {
+            sentenceObj.tabValues[tabIndex][idx] = field.value;
+          });
+        });
+      } else {
+        const fields = Array.from(li.querySelectorAll(".inline-field:not(.tab-pane .inline-field)"));
+        if (!sentenceObj.values) {
+          sentenceObj.values = [];
+        }
+        fields.forEach((field, idx) => {
+          sentenceObj.values[idx] = field.value;
+        });
+      }
+    });
+  });
+}
+
 function removeSentence(partLabel, sentenceId) {
+  const section = dchartSections.find((s) => s.part === partLabel);
   const section = dchartSections.find((s) => s.part === partLabel);
   if (!section) {
     console.error(`Section "${partLabel}" not found.`);
     return;
   }
+  const idx = section.sentences.findIndex((s) => s.id === sentenceId);
   const idx = section.sentences.findIndex((s) => s.id === sentenceId);
   if (idx === -1) {
     console.error(`Sentence ID "${sentenceId}" not found in "${partLabel}".`);
@@ -657,14 +745,19 @@ function buildInlineFields(text, valuesArray) {
     const val = (valuesArray && valuesArray[placeholderIndex]) || "";
     placeholderIndex++;
 
+
     let optsArray = [];
     if (options) {
+      optsArray = options.split(",").map((x) => x.trim());
       optsArray = options.split(",").map((x) => x.trim());
     } else if (globalDropdownOptions[label]) {
       optsArray = globalDropdownOptions[label];
     }
 
     if (type === "customDropdown") {
+      const listItems = optsArray
+        .map((opt) => `<li class="list-group-item">${opt}</li>`)
+        .join("");
       const listItems = optsArray
         .map((opt) => `<li class="list-group-item">${opt}</li>`)
         .join("");
@@ -683,8 +776,10 @@ function buildInlineFields(text, valuesArray) {
         </div>
       `;
     } else if (type === "dropdown") {
+    } else if (type === "dropdown") {
       const dlId = "dl-" + Math.random().toString(36).substring(2);
       let dataListHTML = `<datalist id="${dlId}">`;
+      optsArray.forEach((opt) => {
       optsArray.forEach((opt) => {
         dataListHTML += `<option value="${opt}"></option>`;
       });
@@ -705,6 +800,7 @@ function buildInlineFields(text, valuesArray) {
         </span>
       `;
     } else if (type === "text") {
+    } else if (type === "text") {
       return `
         <input
           type="text"
@@ -716,6 +812,7 @@ function buildInlineFields(text, valuesArray) {
           value="${val}"
         />
       `;
+    } else if (type === "number") {
     } else if (type === "number") {
       return `
         <input
@@ -730,6 +827,7 @@ function buildInlineFields(text, valuesArray) {
       `;
     }
 
+
     return match;
   });
 }
@@ -743,6 +841,7 @@ function buildInlineFieldsForTab(sentenceObj, tabIndex) {
 function makeSentencesDraggable() {
   const lists = document.querySelectorAll(".sentence-list");
   lists.forEach((ul) => {
+  lists.forEach((ul) => {
     new Sortable(ul, {
       animation: 150,
       group: { name: "dchartGroup", pull: true, put: true },
@@ -750,23 +849,32 @@ function makeSentencesDraggable() {
       onEnd: () => {
         storeAllInlineValues();
 
+
         const sentenceMap = {};
+        dchartSections.forEach((sec) => {
+          sec.sentences.forEach((sent) => {
         dchartSections.forEach((sec) => {
           sec.sentences.forEach((sent) => {
             sentenceMap[sent.id] = sent;
           });
         });
         dchartSections.forEach((sec) => {
+        dchartSections.forEach((sec) => {
           sec.sentences = [];
         });
+
 
         const container = document.getElementById("sectionContainer");
         const partDivs = Array.from(container.querySelectorAll(".dchart-section"));
         partDivs.forEach((div) => {
+        partDivs.forEach((div) => {
           const partLabel = div.dataset.part;
+          const section = dchartSections.find((s) => s.part === partLabel);
           const section = dchartSections.find((s) => s.part === partLabel);
           if (!section) return;
           const ulEl = div.querySelector(".sentence-list");
+          const liArray = Array.from(ulEl.children).filter((child) => child.matches("li[data-id]"));
+          liArray.forEach((li) => {
           const liArray = Array.from(ulEl.children).filter((child) => child.matches("li[data-id]"));
           liArray.forEach((li) => {
             const id = li.dataset.id;
@@ -779,6 +887,7 @@ function makeSentencesDraggable() {
         });
         buildSections();
       },
+      },
     });
   });
   attachDropdownLogic();
@@ -786,18 +895,24 @@ function makeSentencesDraggable() {
 
 function attachDropdownLogic() {
   // For each custom dropdown in the document, wire up real-time filtering logic
+  // For each custom dropdown in the document, wire up real-time filtering logic
   document.querySelectorAll(".custom-dropdown").forEach((dropdown) => {
     const input = dropdown.querySelector(".custom-dropdown-input");
     const suggestionBox = dropdown.querySelector(".suggestions");
     if (!input || !suggestionBox) return;
 
+
     let focusedIndex = -1;
     const items = Array.from(suggestionBox.querySelectorAll("li"));
 
     // When the user focuses on the input, filter and show if any item is relevant
+    // When the user focuses on the input, filter and show if any item is relevant
     input.addEventListener("focus", () => {
       filterDropdown();
+      filterDropdown();
     });
+
+    // Hide the suggestion box on blur (with a small timeout to allow clicks)
 
     // Hide the suggestion box on blur (with a small timeout to allow clicks)
     input.addEventListener("blur", () => {
@@ -813,18 +928,30 @@ function attachDropdownLogic() {
     });
 
     // Handle keyboard navigation
+
+    // If the user types in the custom dropdown, filter the visible items
+    input.addEventListener("input", () => {
+      filterDropdown();
+    });
+
+    // Handle keyboard navigation
     input.addEventListener("keydown", (e) => {
       switch (e.keyCode) {
         case 38: // up arrow
+        case 38: // up arrow
           e.preventDefault();
+          moveHighlightUp();
           moveHighlightUp();
           break;
         case 40: // down arrow
+        case 40: // down arrow
           e.preventDefault();
+          moveHighlightDown();
           moveHighlightDown();
           break;
         case 13: // enter
           e.preventDefault();
+          selectHighlighted();
           selectHighlighted();
           break;
         case 27: // esc
@@ -895,6 +1022,67 @@ function attachDropdownLogic() {
       visibleItems.forEach((li) => li.classList.remove("highlight"));
       if (focusedIndex >= 0 && focusedIndex < visibleItems.length) {
         visibleItems[focusedIndex].classList.add("highlight");
+
+    // Clicking on a suggestion sets the input value
+    items.forEach((li, idx) => {
+      li.addEventListener("mousedown", () => {
+        input.value = li.textContent.trim();
+      });
+    });
+
+    function filterDropdown() {
+      const filterValue = input.value.toLowerCase().trim();
+      let anyVisible = false;
+      items.forEach((li) => {
+        if (li.textContent.toLowerCase().includes(filterValue)) {
+          li.style.display = "";
+          anyVisible = true;
+        } else {
+          li.style.display = "none";
+        }
+      });
+      clearHighlight();
+      suggestionBox.style.display = anyVisible ? "block" : "none";
+    }
+
+    function moveHighlightUp() {
+      const visibleItems = getVisibleItems();
+      if (visibleItems.length === 0) return;
+      if (focusedIndex < 0) {
+        // nothing is highlighted yet, highlight last
+        focusedIndex = visibleItems.length - 1;
+      } else {
+        focusedIndex = (focusedIndex - 1 + visibleItems.length) % visibleItems.length;
+      }
+      highlightCurrent(visibleItems);
+    }
+
+    function moveHighlightDown() {
+      const visibleItems = getVisibleItems();
+      if (visibleItems.length === 0) return;
+      if (focusedIndex < 0) {
+        // nothing is highlighted yet, highlight first
+        focusedIndex = 0;
+      } else {
+        focusedIndex = (focusedIndex + 1) % visibleItems.length;
+      }
+      highlightCurrent(visibleItems);
+    }
+
+    function selectHighlighted() {
+      const visibleItems = getVisibleItems();
+      if (focusedIndex >= 0 && focusedIndex < visibleItems.length) {
+        input.value = visibleItems[focusedIndex].textContent.trim();
+      }
+      suggestionBox.style.display = "none";
+      clearHighlight();
+      input.blur();
+    }
+
+    function highlightCurrent(visibleItems) {
+      visibleItems.forEach((li) => li.classList.remove("highlight"));
+      if (focusedIndex >= 0 && focusedIndex < visibleItems.length) {
+        visibleItems[focusedIndex].classList.add("highlight");
       }
     }
 
@@ -902,8 +1090,14 @@ function attachDropdownLogic() {
       return items.filter((li) => li.style.display !== "none");
     }
 
+
+    function getVisibleItems() {
+      return items.filter((li) => li.style.display !== "none");
+    }
+
     function clearHighlight() {
       focusedIndex = -1;
+      items.forEach((item) => item.classList.remove("highlight"));
       items.forEach((item) => item.classList.remove("highlight"));
     }
   });
@@ -918,10 +1112,12 @@ document.getElementById("generateBtn").addEventListener("click", () => {
       "",
       () => {
         finalTextArea.value = generateFinalText();
+        finalTextArea.value = generateFinalText();
       },
       () => {}
     );
   } else {
+    finalTextArea.value = generateFinalText();
     finalTextArea.value = generateFinalText();
   }
 });
@@ -931,16 +1127,22 @@ function generateFinalText() {
   const includeSectionTitles = document.getElementById("toggleSectionTitles").checked;
   let output = "";
 
+
   const container = document.getElementById("sectionContainer");
   const partDivs = Array.from(container.querySelectorAll(".dchart-section"));
 
   partDivs.forEach((div) => {
+  partDivs.forEach((div) => {
     const partLabel = div.dataset.part;
+    const sectionConfig = dchartSections.find((s) => s.part === partLabel);
     const sectionConfig = dchartSections.find((s) => s.part === partLabel);
     if (sectionConfig && sectionConfig.includeTitle && includeSectionTitles) {
       output += partLabel + ":\n";
     }
     const ul = div.querySelector(".sentence-list");
+    const liArray = Array.from(ul.children).filter((child) => child.matches("li[data-id]"));
+
+    liArray.forEach((li) => {
     const liArray = Array.from(ul.children).filter((child) => child.matches("li[data-id]"));
 
     liArray.forEach((li) => {
@@ -956,7 +1158,11 @@ function generateFinalText() {
         let replaced = activeTab.text.replace(placeholderRegex, () => {
           const val =
             sentenceObj.tabValues[sentenceObj.activeTabIndex] &&
+          const val =
+            sentenceObj.tabValues[sentenceObj.activeTabIndex] &&
             sentenceObj.tabValues[sentenceObj.activeTabIndex][placeholderIndex]
+              ? sentenceObj.tabValues[sentenceObj.activeTabIndex][placeholderIndex].trim()
+              : "_";
               ? sentenceObj.tabValues[sentenceObj.activeTabIndex][placeholderIndex].trim()
               : "_";
           placeholderIndex++;
@@ -973,6 +1179,10 @@ function generateFinalText() {
             sentenceObj.values && sentenceObj.values[placeholderIndex]
               ? sentenceObj.values[placeholderIndex].trim()
               : "_";
+          const val =
+            sentenceObj.values && sentenceObj.values[placeholderIndex]
+              ? sentenceObj.values[placeholderIndex].trim()
+              : "_";
           placeholderIndex++;
           return val;
         });
@@ -983,14 +1193,17 @@ function generateFinalText() {
       }
     });
 
+
     output += "\n\n";
   });
+
 
   return output.trim();
 }
 
 function findSentenceById(id) {
   for (const sec of dchartSections) {
+    const s = sec.sentences.find((x) => x.id === id);
     const s = sec.sentences.find((x) => x.id === id);
     if (s) return s;
   }
@@ -1009,6 +1222,8 @@ document.getElementById("copyBtn").addEventListener("click", () => {
     );
     return;
   }
+  navigator.clipboard
+    .writeText(finalTextArea.value)
   navigator.clipboard
     .writeText(finalTextArea.value)
     .then(() => {
@@ -1049,9 +1264,11 @@ function showConfirmationModal(title, message, disclaimer, callbackYes, callback
   const yesBtn = document.getElementById("confirmYesBtn");
   const noBtn = document.getElementById("confirmNoBtn");
 
+
   modalLabel.textContent = title || "";
   modalBody.innerHTML = message || "";
   modalDisclaimer.textContent = disclaimer || "";
+
 
   yesBtn.onclick = () => {
     bootstrap.Modal.getInstance(document.getElementById("confirmationModal")).hide();
