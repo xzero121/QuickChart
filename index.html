@@ -301,7 +301,7 @@ const globalDropdownOptions = {
   ],
   "Straps Count": ["x5"],
   "Patient Condition": ["improved", "did not change", "worsened"],
-  "Transfer of Location": ["hospital bed"],
+  "Transfer of Location": ["hospital bed","facility bed"],
   "Sending Facility": ["Baptist Floyd", "Baptist Freestanding ER in Jeffersonville"],
   "Receiving Facility": ["Baptist Floyd", "Baptist Health Louisville"],
   "Reason": ["higher level of care", "long term care"],
@@ -435,10 +435,10 @@ const defaultDchartSections = [
         text: "The patient was recently [customDropdown:Hospitalized / Evaluated] for [text:Reason]."
       },
       {
-        text: "The patient’s medical history, medications, and allergies are detailed in the HPI. The OPQRST assessment, along with the SAMPLE history, is documented above."
+        text: "The patient’s medical history, medications, and allergies are detailed in the HPI."
       },
       {
-        text: "Including [text:Pertinent Positive Findings]."
+        "The OPQRST assessment is documented above."
       }
     ]
   },
