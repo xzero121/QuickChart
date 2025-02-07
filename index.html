@@ -337,7 +337,8 @@ const rawCommonSentences = [
   "The patient was on a ventilator [customDropdown:Ventilator Mode:AC,PC,PSV,CPAP] with the following settings: pressure control [number:Pressure], rate [number:Rate], FiO2 [number:FiO2], PEEP [number:PEEP], and tidal volume [number:Tidal Volume].",
   "The patient was [number:Rate]LPM O2 via [customDropdown:O2 Delivery Device:Nasal Cannula,High Flow Nasal Cannula,Simple Mask,Non-Rebreather Mask,CPAP,Venturi Mask].",
   "The patient's GCS was assessed as [number:GCS] ([number:GCS Eye],[number:GCS Verbal],[number:GCS Motor]).",
-  "[text:Person] signed on behalf of patient due to the patient being unable to sign due to [customDropdown:Reason not Signed]"
+  "[text:Person] signed on behalf of patient due to the patient being unable to sign due to [customDropdown:Reason not Signed]",
+  "The OPQRST assessment is documented above."
 ];
 
 /**
@@ -435,10 +436,10 @@ const defaultDchartSections = [
         text: "The patient was recently [customDropdown:Hospitalized / Evaluated] for [text:Reason]."
       },
       {
-        text: "The patient’s medical history, medications, and allergies are detailed in the HPI."
+        text: "The patient’s medical history, medications, and allergies are detailed in the Medical Information section."
       },
       {
-        text: "The OPQRST assessment is documented above."
+        text: "Including [text:Pertinent Information]"
       }
     ]
   },
