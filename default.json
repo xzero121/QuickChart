@@ -55,13 +55,13 @@
       "includeTitle": true,
       "sentences": [
         {
-          "text": "[customDropdown:Unit #] was dispatched to [customDropdown:Sending Facility] for [number:Age]yo [customDropdown:Gender]."
+          "text": "[customDropdown:Unit #] was dispatched to [customDropdown:Sending Facility] for [text:Age] [customDropdown:Age Unit:year-old, month-old] [customDropdown:Gender]."
         },
         {
           "text": "The response was [customDropdown:Response Type]."
         },
         {
-          "text": "Upon arrival, the patient’s condition was [text:Initial Condition:Stable,Unstable]."
+          "text": "Upon arrival, the patient’s condition was [text:Initial Condition:stable,stable and within normal limits]."
         },
         {
           "tabs": [
@@ -82,7 +82,16 @@
       "includeTitle": true,
       "sentences": [
         {
-          "text": "The patient’s chief complaint is [text:Chief Complaint], which has been ongoing for [number:Duration] [customDropdown:Duration Units:Minutes, Hours, Days, Weeks, Years]."
+          "tabs": [
+            {
+              "title": "Complaint",
+              "text": "The patient’s chief complaint is [text:Chief Complaint], which has been ongoing for [text:Duration] [customDropdown:Duration Units:minutes, gours, days, weeks, months, years]."
+            },
+            {
+              "title": "No Complaint",
+              "text": "The patient had no stated complaint at the time of EMS transport. [text:Additional Info]."
+            }
+          ]
         }
       ]
     },
@@ -106,7 +115,7 @@
       "includeTitle": true,
       "sentences": [
         {
-          "text": "The patient’s mental status was assessed as [customDropdown:Mental Status], with ABCs evaluated as [text:ABCs]."
+          "text": "The patient’s mental status was assessed as [customDropdown:Mental Status], with ABCs evaluated as [customDropdown:ABCs:noted in assessment]."
         },
         {
           "text": "Primary assessment findings, documented in the treatment tab, revealed [text:Assessment Status]."
@@ -163,7 +172,7 @@
           "text": "The patient was transported to [customDropdown:Receiving Facility]."
         },
         {
-          "text": "Upon arrival, the patient’s condition was [text:Arrival Condition:stable,unstable]."
+          "text": "Upon arrival, the patient’s condition was [text:Arrival Condition:stable,stable and within normal limits]."
         },
         {
           "tabs": [
