@@ -1,9 +1,9 @@
 {
   "commonSentences": [
     "The patient had [customDropdown:IV Size:14G,16G,18G,20G,22G,24G] IV placed in the [customDropdown:IV Location:left arm,right arm,left hand,right hand].",
-    "The patient was on a ventilator [customDropdown:Ventilator Mode:AC,PC,PSV,CPAP] with the following settings: pressure control [number:Pressure], rate [number:Rate], FiO2 [number:FiO2], PEEP [number:PEEP], and tidal volume [number:Tidal Volume].",
-    "The patient was [number:Rate]LPM O2 via [customDropdown:O2 Delivery Device:Nasal Cannula,High Flow Nasal Cannula,Simple Mask,Non-Rebreather Mask,CPAP,Venturi Mask].",
-    "The patient's GCS was assessed as [number:GCS] ([number:GCS Eye],[number:GCS Verbal],[number:GCS Motor])."
+    "The patient was on a ventilator [customDropdown:Ventilator Mode:AC,PC,PSV,CPAP] with the following settings: pressure control [text:Pressure], rate [text:Rate], FiO2 [text:FiO2], PEEP [text:PEEP], and tidal volume [text:Tidal Volume].",
+    "The patient was [text:Rate]LPM O2 via [customDropdown:O2 Delivery Device:Nasal Cannula,High Flow Nasal Cannula,Simple Mask,Non-Rebreather Mask,CPAP,Venturi Mask].",
+    "The patient's GCS was assessed as [text:GCS] ([text:GCS Eye],[text:GCS Verbal],[text:GCS Motor])."
   ],
   "globalDropdownOptions": {
     "Unit #": ["Medic 5", "Medic 6"],
