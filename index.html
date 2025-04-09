@@ -45,8 +45,12 @@
       border: 1px solid #dee2e6;
       border-radius: .25rem;
       position: relative;
-      padding: 0.75rem 2rem;
+      padding: 0.75rem 2rem; /* Padding around sentence content */
     }
+    .sentence-content {
+        line-height: 1.8; /* Give a bit more vertical space for inputs */
+    }
+
 
     /* Drag handle for reordering */
     .drag-handle {
@@ -82,20 +86,34 @@
     }
     .add-item-group {
       display: flex;
+      align-items: flex-start;
       gap: .5rem;
-      align-items: center;
       width: 100%;
     }
-    .add-item-form input[type="text"] {
+    .add-item-form textarea.auto-height-textarea {
       flex: 1;
+      padding: .25rem .5rem;
+      font-size: .875rem;
+      line-height: 1.5;
+      border-radius: .2rem;
+      border: 1px solid #ced4da;
+      resize: none;
+      overflow-y: hidden;
+      min-height: calc(1.5em + .5rem + 2px);
+      box-sizing: border-box;
+    }
+    .add-item-form textarea.auto-height-textarea:focus {
+        border-color: #86b7fe;
+        outline: 0;
+        box-shadow: 0 0 0 .25rem rgba(13,110,253,.25);
     }
 
+
     /* Suggestions box for autocomplete */
-    .suggestions-box, .suggestions { /* .suggestions is used for customDropdown */
+    .suggestions-box, .suggestions {
       position: absolute;
-      /* Position right below the input group */
       top: 100%;
-      margin-top: 2px; /* Small gap */
+      margin-top: 2px;
       left: 0;
       right: 0;
       z-index: 999;
@@ -104,33 +122,29 @@
       border-radius: .25rem;
       max-height: 200px;
       overflow-y: auto;
-      display: none; /* Initially hidden */
+      display: none;
       list-style: none;
-      padding: 0; /* Remove padding on the container div */
-      margin: 0; /* Remove margin on the container div */
+      padding: 0;
+      margin: 0;
+      box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
     }
-
-    /* Style the UL inside the suggestions box */
     .suggestions-box ul, .suggestions ul {
-        padding: 0; /* Remove default browser padding */
-        margin: 0; /* Remove default browser margin */
-        list-style: none; /* Ensure no bullets */
+        padding: 0;
+        margin: 0;
+        list-style: none;
     }
-
-    /* Style list items */
     .suggestions-box li, .suggestions li {
-      padding: .5rem 1rem; /* Padding inside each item */
+      padding: .5rem 1rem;
       cursor: pointer;
       border-bottom: 1px solid #eee;
-      margin: 0; /* Ensure no margin on list items */
+      margin: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
-
-    /* Remove border from the last list item */
     .suggestions-box li:last-child, .suggestions li:last-child {
         border-bottom: none;
     }
-
-    /* Highlight effect */
     .suggestions-box li:hover, .suggestions li:hover,
     .suggestions-box li.highlight, .suggestions li.highlight {
       background-color: #e9ecef;
@@ -140,101 +154,90 @@
     /* Inline fields: input and static display */
     .inline-field {
       display: inline-block;
-      min-width: 50px;
+      width: auto; /* Rely on JS for width adjustment */
+      min-width: 50px; /* Minimum width */
+      max-width: 80%; /* Prevent excessive width relative to parent */
       margin: 0 .25rem;
       vertical-align: baseline;
+      font: inherit;
       font-size: 1em;
       border: none;
       border-bottom: 1px dotted #777;
       background-color: transparent;
       padding: 0 .25rem;
+      box-sizing: border-box;
     }
     .inline-field::placeholder {
       text-align: center;
+      opacity: 0.6;
     }
     .inline-field:focus {
-      outline: none; /* Remove default focus outline */
-      border-bottom-color: #0d6efd; /* Use Bootstrap primary color */
+      outline: none;
+      border-bottom-color: #0d6efd;
       border-bottom-width: 2px;
+      border-bottom-style: solid;
     }
 
     /* Custom dropdown container */
     .custom-dropdown {
       display: inline-block;
-      position: relative; /* Needed for absolute positioning of suggestions */
+      position: relative;
+      vertical-align: baseline;
     }
-    /* Ensure custom dropdown suggestions also benefit */
+    /* Input within custom dropdown - REMOVED specific width rules */
+    /* Let it inherit .inline-field rules and be controlled by JS */
+     .custom-dropdown .inline-field.custom-dropdown-input {
+         /* Inherits width: auto, min-width: 50px, max-width: 80% */
+         /* Specific overrides if needed, e.g., slightly larger min-width */
+         min-width: 80px;
+     }
+
     .custom-dropdown .suggestions {
-        top: 100%; /* Position below the input */
+        top: 100%;
         margin-top: 1px;
-        min-width: 100%; /* Make at least as wide as input */
-        width: auto; /* Allow wider if needed */
+        min-width: 100%;
+        width: auto;
         left: 0;
-        right: auto; /* Don't force right alignment */
+        right: auto;
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
     }
 
 
     /* Tabs */
-    .has-tabs {
-      margin-top: 2rem;
-    }
-     li.has-tabs:first-child {
-      margin-top: 0;
-    }
+    .has-tabs { margin-top: 2rem; }
+    li.has-tabs:first-child { margin-top: 0; }
     .tabs-container {
-      position: absolute;
-      top: -1.7rem;
-      left: 2.5rem;
-      display: flex;
-      gap: 0.25rem;
+      position: absolute; top: -1.7rem; left: 2.5rem; display: flex; gap: 0.25rem;
     }
     .tab-button {
-      padding: 2px 8px;
-      background-color: #e9ecef;
-      border: 1px solid #ced4da;
-      border-radius: .25rem .25rem 0 0;
-      font-size: 0.85rem;
-      cursor: pointer;
-      position: relative;
-      top: 1px; /* Align with top of LI border */
-      border-bottom: none; /* Remove bottom border initially */
+      padding: 2px 8px; background-color: #e9ecef; border: 1px solid #ced4da;
+      border-radius: .25rem .25rem 0 0; font-size: 0.85rem; cursor: pointer;
+      position: relative; top: 1px; border-bottom: none;
     }
     .tab-button.active {
-      background-color: #fff; /* Match LI background */
-      border-bottom-color: #fff; /* Hide border visually */
-      z-index: 2; /* Bring active tab above LI border */
-      font-weight: 500;
+      background-color: #fff; border-bottom-color: #fff; z-index: 2; font-weight: 500;
     }
-    .tab-pane {
-      display: none;
-    }
-    .tab-pane.active {
-      display: block;
-    }
+    .tab-pane { display: none; }
+    .tab-pane.active { display: block; }
 
     /* License and buttons */
-    #license {
-      font-size: 0.9rem;
-    }
-    #license a {
-      font-weight: bold;
-      color: inherit;
-      text-decoration: none;
-    }
-    #license a:hover {
-        text-decoration: underline;
-    }
-    #license img.cc-icon { /* Moved inline styles here */
-        height: 1em !important;
-        margin-left: 3px;
-        vertical-align: baseline;
-    }
-    #newRunBtn {
-      font-variant: small-caps;
+    #license { font-size: 0.9rem; }
+    #license a { font-weight: bold; color: inherit; text-decoration: none; }
+    #license a:hover { text-decoration: underline; }
+    #license img.cc-icon { height: 1em !important; margin-left: 3px; vertical-align: baseline; }
+    #newRunBtn { font-variant: small-caps; }
+
+    /* Hidden span for measuring input width */
+    #width-measurer {
+        position: absolute; top: -9999px; left: -9999px; white-space: pre;
+        visibility: hidden; font: inherit; font-size: 1em; padding: 0 .25rem;
+        border: none; display: inline-block;
     }
   </style>
 </head>
 <body>
+<span id="width-measurer"></span>
+
 <div class="container">
   <div class="d-flex align-items-center justify-content-between mb-4">
     <h1 class="m-0">QuickChart</h1>
@@ -279,14 +282,13 @@
         <h5 class="modal-title" id="confirmationModalLabel">Confirmation</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body" id="confirmationModalBody">
-        </div>
+      <div class="modal-body" id="confirmationModalBody"></div>
       <div class="modal-footer d-flex align-items-center justify-content-between">
-        <div id="confirmationDisclaimer" class="text-muted small">
-            </div>
+        <div id="confirmationDisclaimer" class="text-muted small"></div>
         <div>
           <button type="button" class="btn btn-primary" id="confirmYesBtn">Yes</button>
-          <button type="button" class="btn btn-secondary" id="confirmNoBtn" data-bs-dismiss="modal">No</button> </div>
+          <button type="button" class="btn btn-secondary" id="confirmNoBtn" data-bs-dismiss="modal">No</button>
+        </div>
       </div>
     </div>
   </div>
@@ -301,1336 +303,335 @@
  * QuickChart Application Script
  * Handles dynamic sentence building, reordering, state management,
  * and final narrative generation for EMS charting.
+ * Includes auto-sizing inputs and improved dropdown behavior.
  */
 
 // --- Constants ---
 const placeholderRegex = /\[(text|number|dropdown|customDropdown):([^:\]]+)(?::([^:\]]+))?\]/g;
-const LOCAL_STORAGE_KEY = 'quickChartState_v2'; // Increment version if structure changes significantly
+const LOCAL_STORAGE_KEY = 'quickChartState_v2';
+const MIN_INLINE_WIDTH = 50; // Min width for inline fields (px)
+const MAX_INLINE_WIDTH_PERCENT = 80; // Max width relative to parent (%)
 
 // --- Global State ---
-let rawCommonSentences = [];      // Original sentences from default.json
-let commonSentences = [];         // Processed sentences for Fuse search
-let globalDropdownOptions = {};   // Dropdown options from default.json
-let defaultDchartSections = [];   // Default structure from default.json
-let dchartSections = [];          // Current working state of sections and sentences
-let fuse;                         // Fuse.js instance for fuzzy search
-let sentenceIdCounter = 1;        // Counter for generating unique sentence IDs
+let rawCommonSentences = []; let commonSentences = [];
+let globalDropdownOptions = {}; let defaultDchartSections = [];
+let dchartSections = []; let fuse; let sentenceIdCounter = 1;
+let widthMeasurerSpan; // Ref to hidden span for width calc
 
 // --- Fuse.js Options ---
-const fuseOptions = {
-  keys: ["display", "searchable"], // Fields to search
-  includeMatches: true,           // Include match details (optional)
-  threshold: 0.1,                 // Strictness of search (0=exact, 1=any)
-  minMatchCharLength: 2,          // Minimum characters to trigger search
-  ignoreLocation: true            // Search anywhere in the string
-};
+const fuseOptions = { keys: ["display", "searchable"], includeMatches: true, threshold: 0.1, minMatchCharLength: 2, ignoreLocation: true };
 
 // --- Initialization ---
 document.addEventListener("DOMContentLoaded", initializeApp);
 
-/**
- * Initializes the application: fetches defaults, loads saved state, builds UI.
- */
 async function initializeApp() {
   console.log("Initializing QuickChart...");
+  widthMeasurerSpan = document.getElementById('width-measurer');
+  if (!widthMeasurerSpan) console.error("Width measurer span not found!");
+
   try {
-    // Fetch default configuration
     const response = await fetch("default.json");
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const data = await response.json();
 
-    // Store fetched defaults
     rawCommonSentences = data.commonSentences || [];
     globalDropdownOptions = data.globalDropdownOptions || {};
     defaultDchartSections = data.dchartSections || [];
 
-    // Prepare common sentences for searching
-    commonSentences = rawCommonSentences.map((s) => ({
-      original: s,
-      display: shortPlaceholderString(s),
-      searchable: expandedPlaceholderString(s),
-    }));
-
-    // Initialize Fuse.js
+    commonSentences = rawCommonSentences.map((s) => ({ original: s, display: shortPlaceholderString(s), searchable: expandedPlaceholderString(s) }));
     fuse = new Fuse(commonSentences, fuseOptions);
-    console.log("Fuse.js initialized with", commonSentences.length, "common sentences.");
+    console.log("Fuse.js initialized.");
 
-    // Load state from localStorage or use defaults
     loadState();
-
-    // Build the initial UI
     buildSectionsUI();
+    attachInputSizingListeners();
+    attachBlurListeners(); // Attach general blur listener (for saving)
+    attachDropdownLogic(); // Attach specific dropdown listeners (focus, keydown, mousedown, blur-for-hide)
+    adjustAllInitialSizes();
+
     console.log("QuickChart Initialized Successfully.");
 
   } catch (err) {
     console.error("Failed to initialize QuickChart:", err);
-    // Display a user-friendly error message (e.g., in a modal or alert)
-    showConfirmationModal("Initialization Error",
-        `Could not load application data. Please check the console for details or try refreshing the page. Error: ${err.message}`,
-        "", () => {}, () => {}, true); // Single OK button
-    // Fallback: Use defaults even if localStorage fails? Or show empty state?
-    dchartSections = JSON.parse(JSON.stringify(defaultDchartSections)); // Use defaults as fallback
+    showConfirmationModal("Initialization Error", `Could not load application data. Error: ${err.message}`, "", () => {}, () => {}, true);
+    dchartSections = JSON.parse(JSON.stringify(defaultDchartSections));
     assignInitialIDs(dchartSections);
-    buildSectionsUI(); // Attempt to build UI with defaults
+    buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); // Attempt fallback UI build
   }
 }
 
-// --- State Management (Load/Save/Reset) ---
-
-/**
- * Loads the application state from localStorage or initializes with defaults.
- */
+// --- State Management --- (loadState, saveState, resetAll - unchanged)
 function loadState() {
   const savedState = localStorage.getItem(LOCAL_STORAGE_KEY);
   if (savedState) {
-    try {
-      dchartSections = JSON.parse(savedState);
-      // Ensure data integrity after loading (e.g., initialize missing fields)
-      assignInitialIDs(dchartSections); // Also initializes value structures
-      console.log("State loaded from localStorage.");
-    } catch (e) {
-      console.error("Failed to parse saved state, using defaults.", e);
-      localStorage.removeItem(LOCAL_STORAGE_KEY); // Clear corrupted state
-      dchartSections = JSON.parse(JSON.stringify(defaultDchartSections));
-      assignInitialIDs(dchartSections);
-    }
-  } else {
-    console.log("No saved state found, using defaults.");
-    dchartSections = JSON.parse(JSON.stringify(defaultDchartSections));
-    assignInitialIDs(dchartSections);
-  }
-  // Ensure counter is ahead of any loaded IDs
+    try { dchartSections = JSON.parse(savedState); assignInitialIDs(dchartSections); console.log("State loaded."); }
+    catch (e) { console.error("Failed parse saved state.", e); localStorage.removeItem(LOCAL_STORAGE_KEY); dchartSections = JSON.parse(JSON.stringify(defaultDchartSections)); assignInitialIDs(dchartSections); }
+  } else { console.log("No saved state found."); dchartSections = JSON.parse(JSON.stringify(defaultDchartSections)); assignInitialIDs(dchartSections); }
   sentenceIdCounter = findHighestSentenceId(dchartSections) + 1;
 }
-
-/**
- * Saves the current application state (dchartSections) to localStorage.
- * Debounced version could be used if performance becomes an issue.
- */
-function saveState() {
-  try {
-    // Optional: Prune empty values before saving?
-    const stateString = JSON.stringify(dchartSections);
-    localStorage.setItem(LOCAL_STORAGE_KEY, stateString);
-    // console.log("State saved."); // Optional: for debugging
-  } catch (e) {
-    console.error("Failed to save state to localStorage:", e);
-    // Potentially notify user if storage is full or failing
-  }
-}
-
-/**
- * Resets the application state to defaults, clears localStorage, and rebuilds UI.
- */
+function saveState() { try { localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dchartSections)); } catch (e) { console.error("Failed save state.", e); } }
 function resetAll() {
-  console.log("Resetting application state.");
-  dchartSections = JSON.parse(JSON.stringify(defaultDchartSections));
-  assignInitialIDs(dchartSections); // Reassign IDs and initialize values
-  localStorage.removeItem(LOCAL_STORAGE_KEY); // Clear saved state
-  buildSectionsUI(); // Rebuild UI with defaults
-  document.getElementById("finalText").value = ""; // Clear output
-  document.getElementById("toggleSectionTitles").checked = true; // Reset toggle
-  saveState(); // Save the default state immediately
+  console.log("Resetting state."); dchartSections = JSON.parse(JSON.stringify(defaultDchartSections)); assignInitialIDs(dchartSections);
+  localStorage.removeItem(LOCAL_STORAGE_KEY); buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes();
+  document.getElementById("finalText").value = ""; document.getElementById("toggleSectionTitles").checked = true; saveState();
 }
 
-// --- ID and Value Initialization ---
-
-/**
- * Assigns unique IDs (`sentence-X`) to sentences if they don't have one.
- * Also ensures value structures (`values` object, `tabValues` array of objects) exist.
- * Modifies the sections array directly.
- * @param {Array} sections - The array of section objects.
- */
+// --- ID and Value Initialization --- (assignInitialIDs, findHighestSentenceId, initializeSentenceValues - unchanged)
 function assignInitialIDs(sections) {
-  let maxId = 0;
-  sections.forEach(section => {
-    if (!section.sentences) section.sentences = []; // Ensure sentences array exists
-    section.sentences.forEach(sentenceObj => {
-      if (!sentenceObj.id || !sentenceObj.id.startsWith('sentence-')) {
-        sentenceObj.id = "sentence-" + sentenceIdCounter++;
-      } else {
-        // Track max existing ID number from loaded data
-        const idNum = parseInt(sentenceObj.id.split('-')[1]);
-        if (!isNaN(idNum) && idNum > maxId) {
-          maxId = idNum;
-        }
-      }
-      // Ensure value structures are present and are objects
-      initializeSentenceValues(sentenceObj);
-    });
-  });
-  // Ensure global counter is ahead of any loaded IDs
-  sentenceIdCounter = Math.max(sentenceIdCounter, maxId + 1);
+  let maxId = 0; sections.forEach(section => { if (!section.sentences) section.sentences = []; section.sentences.forEach(sentenceObj => {
+    if (!sentenceObj.id || !sentenceObj.id.startsWith('sentence-')) sentenceObj.id = "sentence-" + sentenceIdCounter++;
+    else { const idNum = parseInt(sentenceObj.id.split('-')[1]); if (!isNaN(idNum) && idNum > maxId) maxId = idNum; }
+    initializeSentenceValues(sentenceObj); }); }); sentenceIdCounter = Math.max(sentenceIdCounter, maxId + 1);
 }
-
-/**
- * Finds the highest numerical suffix used in existing sentence IDs.
- * @param {Array} sections - The array of section objects.
- * @returns {number} The highest ID number found.
- */
-function findHighestSentenceId(sections) {
-    let maxId = 0;
-    sections.forEach(section => {
-        if (!section.sentences) return; // Skip if section has no sentences array
-        section.sentences.forEach(sentenceObj => {
-            if (sentenceObj.id && sentenceObj.id.startsWith('sentence-')) {
-                const idNum = parseInt(sentenceObj.id.split('-')[1]);
-                if (!isNaN(idNum) && idNum > maxId) {
-                    maxId = idNum;
-                }
-            }
-        });
-    });
-    return maxId;
+function findHighestSentenceId(sections) { let maxId = 0; sections.forEach(section => { if (!section.sentences) return; section.sentences.forEach(sentenceObj => {
+  if (sentenceObj.id && sentenceObj.id.startsWith('sentence-')) { const idNum = parseInt(sentenceObj.id.split('-')[1]); if (!isNaN(idNum) && idNum > maxId) maxId = idNum; } }); }); return maxId;
 }
-
-/**
- * Ensures the necessary value storage structures exist on a sentence object.
- * Converts old array-based value storage to new object-based storage if detected.
- * Modifies the sentenceObj directly.
- * @param {object} sentenceObj - The sentence object.
- */
 function initializeSentenceValues(sentenceObj) {
   if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
-    // --- Tabbed Sentence ---
-    // Default active tab index
-    if (typeof sentenceObj.activeTabIndex === "undefined" || sentenceObj.activeTabIndex >= sentenceObj.tabs.length) {
-      sentenceObj.activeTabIndex = 0;
-    }
-    // Ensure tabValues is an array of the correct length
-    if (!sentenceObj.tabValues || !Array.isArray(sentenceObj.tabValues) || sentenceObj.tabValues.length !== sentenceObj.tabs.length) {
-      sentenceObj.tabValues = sentenceObj.tabs.map(() => ({})); // Array of empty objects
-    } else {
-      // Ensure each element in tabValues is an object (handles loading old array format)
-      sentenceObj.tabValues = sentenceObj.tabValues.map(valStore =>
-        (typeof valStore === 'object' && !Array.isArray(valStore) && valStore !== null) ? valStore : {}
-      );
-    }
-  } else {
-    // --- Standard Sentence ---
-    // Ensure values is an object (handles loading old array format)
-    if (!sentenceObj.values || Array.isArray(sentenceObj.values)) {
-      sentenceObj.values = {}; // Use object {label: value}
-    }
-  }
+    if (typeof sentenceObj.activeTabIndex === "undefined" || sentenceObj.activeTabIndex >= sentenceObj.tabs.length) sentenceObj.activeTabIndex = 0;
+    if (!sentenceObj.tabValues || !Array.isArray(sentenceObj.tabValues) || sentenceObj.tabValues.length !== sentenceObj.tabs.length) sentenceObj.tabValues = sentenceObj.tabs.map(() => ({}));
+    else sentenceObj.tabValues = sentenceObj.tabValues.map(valStore => (typeof valStore === 'object' && !Array.isArray(valStore) && valStore !== null) ? valStore : {});
+  } else if (!sentenceObj.values || Array.isArray(sentenceObj.values)) sentenceObj.values = {};
 }
 
-// --- String Manipulation Helpers ---
+// --- String Manipulation Helpers --- (shortPlaceholderString, expandedPlaceholderString - unchanged)
+function shortPlaceholderString(sentence) { return sentence.replace(placeholderRegex, (match, type, label) => `[${label}]`); }
+function expandedPlaceholderString(sentence) { return sentence.replace(placeholderRegex, (match, theType, label, opts) => opts ? `[${label}(${opts})]` : `[${label}]`); }
 
-/** Creates shorter version of placeholders for display (e.g., in suggestion box) */
-function shortPlaceholderString(sentence) {
-  return sentence.replace(placeholderRegex, (match, type, label) => `[${label}]`);
-}
-
-/** Creates an expanded placeholder string for better search results */
-function expandedPlaceholderString(sentence) {
-  return sentence.replace(placeholderRegex, (match, theType, label, opts) => {
-    return opts ? `[${label}(${opts})]` : `[${label}]`; // Include options in searchable string
-  });
-}
-
-// --- UI Building Functions ---
-
-/**
- * Builds or rebuilds the entire Sections UI in the DOM from the dchartSections data.
- */
+// --- UI Building Functions --- (buildSectionsUI, createSectionElement, createSentenceElement, createTabsContainer, createTabPaneElement, createRemoveButton, createAddSentenceForm - unchanged)
 function buildSectionsUI() {
-  const container = document.getElementById("sectionContainer");
-  if (!container) {
-      console.error("Section container not found!");
-      return;
-  }
-  container.innerHTML = ""; // Clear existing content
-
-  dchartSections.forEach(secObj => {
-    const sectionDiv = createSectionElement(secObj);
-    container.appendChild(sectionDiv);
-  });
-
-  // Initialize SortableJS for drag-and-drop
+  const container = document.getElementById("sectionContainer"); if (!container) { console.error("Section container not found!"); return; }
+  container.innerHTML = ""; dchartSections.forEach(secObj => container.appendChild(createSectionElement(secObj)));
   makeSentencesDraggable();
-  // Attach logic for custom dropdowns
-  attachDropdownLogic();
-  // Attach blur listeners for saving inline field values
-  attachBlurListeners();
+  // Listeners attached in initializeApp/resetAll/addSentence/switchTab
 }
-
-/** Creates a DOM element for a single DCHART Section. */
 function createSectionElement(secObj) {
-    const sectionDiv = document.createElement("div");
-    sectionDiv.classList.add("dchart-section");
-    sectionDiv.dataset.part = secObj.part; // Store section identifier (D, C, H, etc.)
-
-    // Section Header (e.g., "D")
-    const header = document.createElement("div");
-    header.classList.add("section-header");
-    const titleEl = document.createElement("h5");
-    titleEl.classList.add("section-title", "m-0"); // Use margin utility class
-    titleEl.innerText = secObj.part;
-    header.appendChild(titleEl);
-    sectionDiv.appendChild(header);
-
-    // Sentence List Container (ul)
-    const ul = document.createElement("ul");
-    ul.classList.add("sentence-list");
-    ul.dataset.part = secObj.part; // Associate list with section part for drag-and-drop context
-
-    // Add Sentence Elements (li)
-    if (secObj.sentences) {
-        secObj.sentences.forEach(sentenceObj => {
-            const li = createSentenceElement(sentenceObj, secObj.part);
-            ul.appendChild(li);
-        });
-    }
-    sectionDiv.appendChild(ul);
-
-    // Add 'Add Sentence' Form
-    sectionDiv.appendChild(createAddSentenceForm(secObj));
-
-    return sectionDiv;
+    const sectionDiv = document.createElement("div"); sectionDiv.classList.add("dchart-section"); sectionDiv.dataset.part = secObj.part;
+    const header = document.createElement("div"); header.classList.add("section-header"); const titleEl = document.createElement("h5");
+    titleEl.classList.add("section-title", "m-0"); titleEl.innerText = secObj.part; header.appendChild(titleEl); sectionDiv.appendChild(header);
+    const ul = document.createElement("ul"); ul.classList.add("sentence-list"); ul.dataset.part = secObj.part;
+    if (secObj.sentences) secObj.sentences.forEach(sentenceObj => ul.appendChild(createSentenceElement(sentenceObj, secObj.part)));
+    sectionDiv.appendChild(ul); sectionDiv.appendChild(createAddSentenceForm(secObj)); return sectionDiv;
 }
-
-/** Creates a DOM element (li) for a single sentence. */
 function createSentenceElement(sentenceObj, partLabel) {
-    // Ensure value structures are initialized before building HTML
-    initializeSentenceValues(sentenceObj);
-
-    const li = document.createElement("li");
-    li.dataset.id = sentenceObj.id;     // Unique ID for the sentence
-    li.dataset.part = partLabel;      // Section it currently belongs to
-
-    // Drag Handle
-    const handle = document.createElement("span");
-    handle.classList.add("drag-handle");
-    handle.innerHTML = "&#9776;"; // Hamburger icon for dragging
-    handle.title = "Drag to reorder";
-    li.appendChild(handle);
-
-    // Content Area (either tabs or inline fields)
-    const contentDiv = document.createElement('div'); // Wrap content
-    contentDiv.classList.add('sentence-content'); // Add a class for potential styling
-
+    initializeSentenceValues(sentenceObj); const li = document.createElement("li"); li.dataset.id = sentenceObj.id; li.dataset.part = partLabel;
+    const handle = document.createElement("span"); handle.classList.add("drag-handle"); handle.innerHTML = "&#9776;"; handle.title = "Drag"; li.appendChild(handle);
+    const contentDiv = document.createElement('div'); contentDiv.classList.add('sentence-content');
     if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
-        // --- Tabbed Sentence ---
-        li.classList.add("has-tabs");
-        // Create and append tab buttons container
-        const tabsContainer = createTabsContainer(sentenceObj);
-        li.appendChild(tabsContainer); // Append tabs container *before* contentDiv
-
-        // Create and append tab panes into contentDiv
-        sentenceObj.tabs.forEach((tab, i) => {
-            const tabPane = createTabPaneElement(sentenceObj, i);
-            contentDiv.appendChild(tabPane);
-        });
-    } else {
-        // --- Normal Sentence ---
-        // Build inline fields HTML and set it as innerHTML of contentDiv
-        contentDiv.innerHTML = buildInlineFields(sentenceObj.text, sentenceObj.values);
-    }
-    li.appendChild(contentDiv); // Append the content wrapper
-
-    // Remove Button
-    const removeBtn = createRemoveButton(sentenceObj.id, partLabel);
-    li.appendChild(removeBtn);
-
-    return li;
+        li.classList.add("has-tabs"); li.appendChild(createTabsContainer(sentenceObj));
+        sentenceObj.tabs.forEach((tab, i) => contentDiv.appendChild(createTabPaneElement(sentenceObj, i)));
+    } else contentDiv.innerHTML = buildInlineFields(sentenceObj.text, sentenceObj.values);
+    li.appendChild(contentDiv); li.appendChild(createRemoveButton(sentenceObj.id, partLabel)); return li;
 }
-
-/** Creates the container and buttons for tabbed sentences. */
 function createTabsContainer(sentenceObj) {
-    const tabsContainer = document.createElement("div");
-    tabsContainer.classList.add("tabs-container");
-
-    sentenceObj.tabs.forEach((tab, i) => {
-        const tabBtn = document.createElement("button"); // Use button for better accessibility
-        tabBtn.classList.add("tab-button");
-        tabBtn.type = "button"; // Explicitly set type
-        if (i === sentenceObj.activeTabIndex) {
-            tabBtn.classList.add("active");
-        }
-        tabBtn.innerText = tab.title || `Tab ${i + 1}`;
-        tabBtn.dataset.tabIndex = i; // Store index on button
-        tabBtn.addEventListener("click", () => switchTab(sentenceObj.id, i));
-        tabsContainer.appendChild(tabBtn);
-    });
-    return tabsContainer;
+    const tabsContainer = document.createElement("div"); tabsContainer.classList.add("tabs-container");
+    sentenceObj.tabs.forEach((tab, i) => { const tabBtn = document.createElement("button"); tabBtn.classList.add("tab-button"); tabBtn.type = "button";
+        if (i === sentenceObj.activeTabIndex) tabBtn.classList.add("active"); tabBtn.innerText = tab.title || `Tab ${i + 1}`; tabBtn.dataset.tabIndex = i;
+        tabBtn.addEventListener("click", () => switchTab(sentenceObj.id, i)); tabsContainer.appendChild(tabBtn); }); return tabsContainer;
 }
-
-/** Creates a single Tab Pane element (div) containing inline fields. */
 function createTabPaneElement(sentenceObj, tabIndex) {
-    const tabPane = document.createElement("div");
-    tabPane.classList.add("tab-pane");
-    tabPane.dataset.tabIndex = tabIndex; // Store index
-    if (tabIndex === sentenceObj.activeTabIndex) {
-        tabPane.classList.add("active"); // Show if it's the active tab
-    }
-    // Build inline fields HTML for this specific tab's content and values
-    const tabContent = sentenceObj.tabs[tabIndex].text || "";
-    const tabValues = sentenceObj.tabValues[tabIndex] || {}; // Use object
-    tabPane.innerHTML = buildInlineFields(tabContent, tabValues);
-    return tabPane;
+    const tabPane = document.createElement("div"); tabPane.classList.add("tab-pane"); tabPane.dataset.tabIndex = tabIndex; if (tabIndex === sentenceObj.activeTabIndex) tabPane.classList.add("active");
+    const tabContent = sentenceObj.tabs[tabIndex].text || ""; const tabValues = sentenceObj.tabValues[tabIndex] || {}; tabPane.innerHTML = buildInlineFields(tabContent, tabValues); return tabPane;
 }
-
-/** Creates the remove button (X) for a sentence. */
 function createRemoveButton(sentenceId, partLabel) {
-    const removeBtn = document.createElement("button");
-    removeBtn.classList.add("remove-sentence-btn");
-    removeBtn.type = "button";
-    removeBtn.innerHTML = "&times;"; // Multiplication sign (X)
-    removeBtn.title = "Remove this sentence";
-    removeBtn.setAttribute('aria-label', 'Remove sentence'); // Accessibility
-    removeBtn.addEventListener("click", (e) => {
-        e.stopPropagation(); // Prevent triggering other li events
-        showConfirmationModal(
-            "Remove Sentence",
-            "Are you sure you want to remove this sentence?",
-            "",
-            () => removeSentence(partLabel, sentenceId), // Call optimized remove
-            () => {} // No action on "No"
-        );
-    });
-    return removeBtn;
+    const removeBtn = document.createElement("button"); removeBtn.classList.add("remove-sentence-btn"); removeBtn.type = "button"; removeBtn.innerHTML = "&times;"; removeBtn.title = "Remove"; removeBtn.setAttribute('aria-label', 'Remove sentence');
+    removeBtn.addEventListener("click", (e) => { e.stopPropagation(); showConfirmationModal("Remove Sentence", "Are you sure?", "", () => removeSentence(partLabel, sentenceId), () => {}); }); return removeBtn;
 }
-
-/** Creates the 'Add Sentence' form (input, button, suggestions box) for a section. */
 function createAddSentenceForm(secObj) {
-    const form = document.createElement("form");
-    form.classList.add("add-item-form");
-    form.dataset.part = secObj.part;
-    // Prevent default form submission which reloads page
-    form.addEventListener('submit', (e) => e.preventDefault());
-
-    const groupDiv = document.createElement("div");
-    groupDiv.classList.add("add-item-group");
-
-    const input = document.createElement("input");
-    input.type = "text";
-    input.classList.add("form-control", "form-control-sm");
-    input.placeholder = "Type to add or search sentences...";
-    input.setAttribute('aria-label', `Add new sentence to section ${secObj.part}`);
-
-    const addBtn = document.createElement("button");
-    addBtn.type = "button"; // Change type to button to prevent implicit submission
-    addBtn.classList.add("btn", "btn-sm", "btn-secondary");
-    addBtn.innerText = "Add";
-    addBtn.title = "Add the sentence typed in the box";
-    // Handle manual sentence addition via button click
-    addBtn.addEventListener("click", () => {
-        const newText = input.value.trim();
-        if (newText) {
-            addSentence(secObj.part, { text: newText });
-            input.value = ""; // Clear input after adding
-        }
-    });
-    // Allow adding via Enter key in the input field
-     input.addEventListener("keypress", (e) => {
-        if (e.key === 'Enter') {
-            e.preventDefault(); // Prevent form submission
-            const newText = input.value.trim();
-             if (newText) {
-                addSentence(secObj.part, { text: newText });
-                input.value = "";
-                suggestionsBox.style.display = 'none'; // Hide suggestions
-            }
-        }
-    });
-
-
-    groupDiv.appendChild(input);
-    groupDiv.appendChild(addBtn);
-
-    // Suggestions dropdown container
-    const suggestionsBox = document.createElement("div");
-    suggestionsBox.classList.add("suggestions-box");
-    // The UL needs to be created inside for proper styling/structure
-    const suggestionsUl = document.createElement("ul");
-    suggestionsBox.appendChild(suggestionsUl);
-
-
-    form.appendChild(groupDiv);
-    form.appendChild(suggestionsBox); // Append suggestions box to the form
-
-    // Handle suggestions dropdown population on input
-    input.addEventListener("input", () => handleSuggestionsInput(input, suggestionsBox, secObj.part));
-    // Hide suggestions on blur (with delay for click)
-    input.addEventListener("blur", () => {
-        // Delay hiding to allow click events on suggestions to register
-        setTimeout(() => { suggestionsBox.style.display = "none"; }, 150);
-    });
-
-    return form;
+    const form = document.createElement("form"); form.classList.add("add-item-form"); form.dataset.part = secObj.part; form.addEventListener('submit', (e) => e.preventDefault());
+    const groupDiv = document.createElement("div"); groupDiv.classList.add("add-item-group");
+    const textarea = document.createElement("textarea"); textarea.classList.add("form-control", "form-control-sm", "auto-height-textarea"); textarea.placeholder = "Type to add or search..."; textarea.setAttribute('aria-label', `Add sentence to ${secObj.part}`); textarea.rows = 1;
+    const addBtn = document.createElement("button"); addBtn.type = "button"; addBtn.classList.add("btn", "btn-sm", "btn-secondary"); addBtn.innerText = "Add"; addBtn.title = "Add sentence";
+    addBtn.addEventListener("click", () => { const newText = textarea.value.trim(); if (newText) { addSentence(secObj.part, { text: newText }); textarea.value = ""; adjustTextareaHeight(textarea); } });
+    textarea.addEventListener("keypress", (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); const newText = textarea.value.trim(); if (newText) { addSentence(secObj.part, { text: newText }); textarea.value = ""; adjustTextareaHeight(textarea); suggestionsBox.style.display = 'none'; } } });
+    groupDiv.appendChild(textarea); groupDiv.appendChild(addBtn);
+    const suggestionsBox = document.createElement("div"); suggestionsBox.classList.add("suggestions-box"); const suggestionsUl = document.createElement("ul"); suggestionsBox.appendChild(suggestionsUl);
+    form.appendChild(groupDiv); form.appendChild(suggestionsBox);
+    textarea.addEventListener("input", () => { handleSuggestionsInput(textarea, suggestionsBox, secObj.part); adjustTextareaHeight(textarea); });
+    textarea.addEventListener("blur", () => { setTimeout(() => { suggestionsBox.style.display = "none"; }, 150); });
+    setTimeout(() => adjustTextareaHeight(textarea), 0); return form;
 }
 
-// --- UI Interaction Functions ---
-
-/** Handles populating the suggestions dropdown based on user input. */
+// --- UI Interaction Functions --- (handleSuggestionsInput, addSentence, removeSentence, switchTab - unchanged logic, but attach necessary listeners on add/switch)
 function handleSuggestionsInput(inputElement, suggestionsBoxElement, partLabel) {
-    const query = inputElement.value.trim();
-    const ulEl = suggestionsBoxElement.querySelector("ul"); // Target the inner ul
-    if (!ulEl) return; // Safety check
-
-    ulEl.innerHTML = ""; // Clear previous suggestions
-
-    if (query.length < fuseOptions.minMatchCharLength) { // Check min length
-        suggestionsBoxElement.style.display = "none";
-        return;
-    }
-
-    const fuseResults = fuse.search(query);
-    if (fuseResults.length === 0) {
-        suggestionsBoxElement.style.display = "none";
-        return;
-    }
-
-    // Limit the number of suggestions displayed (e.g., top 10)
-    fuseResults.slice(0, 10).forEach((res) => {
-        const li = document.createElement("li");
-        li.textContent = res.item.display; // Show the short version
-        li.title = res.item.original; // Show full version on hover (optional)
-        // Use mousedown to trigger before blur hides the box
-        li.addEventListener("mousedown", () => {
-            addSentence(partLabel, { text: res.item.original }); // Add the original sentence
-            inputElement.value = ""; // Clear the input
-            suggestionsBoxElement.style.display = "none"; // Hide the box
-        });
-        ulEl.appendChild(li);
-    });
-    suggestionsBoxElement.style.display = "block"; // Show the box
+    const query = inputElement.value.trim(); const ulEl = suggestionsBoxElement.querySelector("ul"); if (!ulEl) return; ulEl.innerHTML = "";
+    if (query.length < fuseOptions.minMatchCharLength) { suggestionsBoxElement.style.display = "none"; return; }
+    const fuseResults = fuse.search(query); if (fuseResults.length === 0) { suggestionsBoxElement.style.display = "none"; return; }
+    fuseResults.slice(0, 10).forEach((res) => { const li = document.createElement("li"); li.textContent = res.item.display; li.title = res.item.original;
+        li.addEventListener("mousedown", () => { addSentence(partLabel, { text: res.item.original }); inputElement.value = ""; if (inputElement.tagName === 'TEXTAREA') adjustTextareaHeight(inputElement); suggestionsBoxElement.style.display = "none"; });
+        ulEl.appendChild(li); }); suggestionsBoxElement.style.display = "block";
 }
-
-/** Adds a new sentence object to a section's data and updates the UI. */
 function addSentence(partLabel, sentenceData) {
-    const section = dchartSections.find(s => s.part === partLabel);
-    if (!section) {
-        console.error(`Section "${partLabel}" not found for adding sentence.`);
-        return;
-    }
-
-    // Assign ID and initialize value structures
-    sentenceData.id = "sentence-" + sentenceIdCounter++;
-    initializeSentenceValues(sentenceData); // Ensure values object exists
-
-    // Add to data structure
-    if (!section.sentences) section.sentences = []; // Ensure array exists
-    section.sentences.push(sentenceData);
-    console.log(`Sentence added to section ${partLabel}:`, sentenceData.id);
-
-    // Add to UI (Targeted DOM Update)
-    const ul = document.querySelector(`.sentence-list[data-part="${partLabel}"]`);
-    if (ul) {
-        const li = createSentenceElement(sentenceData, partLabel);
-        ul.appendChild(li);
-        // Attach necessary JS logic to the newly added element
-        attachDropdownLogicForElement(li);
-        attachBlurListenersForElement(li);
-        // Optional: Scroll the new item into view
+    const section = dchartSections.find(s => s.part === partLabel); if (!section) return;
+    sentenceData.id = "sentence-" + sentenceIdCounter++; initializeSentenceValues(sentenceData); if (!section.sentences) section.sentences = []; section.sentences.push(sentenceData);
+    console.log(`Sentence added: ${sentenceData.id}`); const ul = document.querySelector(`.sentence-list[data-part="${partLabel}"]`);
+    if (ul) { const li = createSentenceElement(sentenceData, partLabel); ul.appendChild(li);
+        attachDropdownLogicForElement(li); attachBlurListenersForElement(li); attachInputSizingListenersForElement(li); adjustAllInitialSizesForElement(li);
         li.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    } else {
-        // Fallback if list element not found (should not happen in normal flow)
-        console.warn(`Sentence list for section ${partLabel} not found in DOM. Rebuilding UI.`);
-        buildSectionsUI();
-    }
-    saveState(); // Save state after adding
-}
-
-/** Removes a sentence from the data structure and the UI. */
-function removeSentence(partLabel, sentenceId) {
-    const section = dchartSections.find(s => s.part === partLabel);
-    if (!section || !section.sentences) {
-         console.error(`Section "${partLabel}" or its sentences array not found for removing sentence ${sentenceId}.`);
-         return;
-    }
-
-    const index = section.sentences.findIndex(s => s.id === sentenceId);
-    if (index > -1) {
-        // Remove from data structure
-        section.sentences.splice(index, 1);
-        console.log(`Sentence removed from data: ${sentenceId}`);
-
-        // Remove from UI (Targeted DOM Update)
-        const li = document.querySelector(`li[data-id="${sentenceId}"]`);
-        if (li) {
-            li.remove();
-            console.log(`Sentence element removed from DOM: ${sentenceId}`);
-        } else {
-            // Fallback if element somehow not found
-            console.warn(`Sentence element ${sentenceId} not found in DOM for removal. Rebuilding UI.`);
-            buildSectionsUI();
-        }
-        saveState(); // Save state after removing
-    } else {
-         console.warn(`Sentence ID "${sentenceId}" not found in data for section "${partLabel}".`);
-    }
-}
-
-/** Switches the active tab for a tabbed sentence and updates the UI. */
-function switchTab(sentenceId, tabIndex) {
-    const sentenceObj = findSentenceById(sentenceId);
-    if (!sentenceObj || !sentenceObj.tabs) {
-        console.error(`Sentence ${sentenceId} or its tabs not found for switching tab.`);
-        return;
-    }
-    // Ensure tabIndex is valid
-    if (tabIndex < 0 || tabIndex >= sentenceObj.tabs.length) {
-        console.error(`Invalid tab index ${tabIndex} for sentence ${sentenceId}.`);
-        return;
-    }
-
-    // Update the active tab index in the data
-    sentenceObj.activeTabIndex = tabIndex;
-    console.log(`Switched to tab ${tabIndex} for sentence ${sentenceId}`);
-
-    // Update the UI specifically for this sentence's tabs
-    const li = document.querySelector(`li[data-id="${sentenceId}"]`);
-    if (li) {
-        // Update tab button active states
-        const tabButtons = li.querySelectorAll('.tabs-container .tab-button');
-        tabButtons.forEach((btn, index) => {
-            btn.classList.toggle('active', index === tabIndex);
-        });
-
-        // Update tab pane active states and rebuild content for the active one
-        const tabPanes = li.querySelectorAll('.tab-pane');
-        tabPanes.forEach((pane, index) => {
-             const isActive = index === tabIndex;
-             pane.classList.toggle('active', isActive);
-             // Rebuild content ONLY for the newly active pane to show correct fields/values
-             if (isActive) {
-                 const tabContent = sentenceObj.tabs[index].text || "";
-                 const tabValues = sentenceObj.tabValues[index] || {};
-                 pane.innerHTML = buildInlineFields(tabContent, tabValues);
-                 // Re-attach listeners for the new content within the active pane
-                 attachDropdownLogicForElement(pane);
-                 attachBlurListenersForElement(pane);
-             }
-        });
-    } else {
-        // Fallback if list item element not found
-        console.warn(`Sentence element ${sentenceId} not found in DOM for tab switch. Rebuilding UI.`);
-        buildSectionsUI();
-    }
-    saveState(); // Save state after switching tab
-}
-
-/** Attaches blur event listeners to all inline fields to trigger saving. */
-function attachBlurListeners() {
-    // Use event delegation on the container for potentially better performance
-    const container = document.getElementById('sectionContainer');
-    if (container) {
-        // Remove previous listener before adding new one
-        container.removeEventListener('blur', handleInlineFieldBlurDelegated, true);
-        container.addEventListener('blur', handleInlineFieldBlurDelegated, true); // Use capture phase
-    }
-}
-/** Attaches blur listeners only within a specific newly created element. */
-function attachBlurListenersForElement(element) {
-    // This might not be needed if using delegation, but kept for potential specific cases
-    element.querySelectorAll('.inline-field[data-label]').forEach(field => {
-        field.removeEventListener('blur', handleInlineFieldBlur); // Prevent duplicates if not using delegation
-        field.addEventListener('blur', handleInlineFieldBlur);
-    });
-}
-
-/** Delegated blur event handler for inline fields. */
-function handleInlineFieldBlurDelegated(event) {
-    // Check if the blurred element is one of our inline fields
-    if (event.target.matches('.inline-field[data-label]')) {
-        handleInlineFieldBlur(event); // Call the original logic
-    }
-}
-
-
-/** Handles the blur event on an inline field to save its value to the data structure. */
-function handleInlineFieldBlur(event) {
-    const field = event.target;
-    const label = field.dataset.label; // Get the placeholder label (key for value storage)
-    const value = field.value;         // Get the current input value
-    const li = field.closest('li[data-id]'); // Find the parent sentence li element
-
-    if (!li || !label) {
-        // console.warn("Could not find parent sentence or label for blurred field:", field);
-        return; // Exit if we can't find context
-    }
-
-    const sentenceId = li.dataset.id;
-    const sentenceObj = findSentenceById(sentenceId); // Find the corresponding sentence object in our data
-    if (!sentenceObj) {
-        console.error(`Sentence data object not found for ID: ${sentenceId}`);
-        return; // Exit if data object is missing
-    }
-
-    // Determine if the field is inside a tab pane or a standard sentence
-    const tabPane = field.closest('.tab-pane[data-tab-index]');
-
-    let valueChanged = false; // Flag to check if saveState is necessary
-
-    if (tabPane) {
-        // --- Field is inside a Tab ---
-        const tabIndex = parseInt(tabPane.dataset.tabIndex);
-        // Ensure tabValues structure is correct
-        if (!isNaN(tabIndex) && sentenceObj.tabValues && sentenceObj.tabValues[tabIndex]) {
-            // Check if value actually changed before updating and setting flag
-            if (sentenceObj.tabValues[tabIndex][label] !== value) {
-                sentenceObj.tabValues[tabIndex][label] = value; // Store value using label as key
-                valueChanged = true;
-            }
-        } else {
-             console.error(`Invalid tab index or tabValues structure for sentence ${sentenceId}, tab ${tabIndex}`);
-        }
-    } else if (sentenceObj.values) {
-        // --- Field is in a Standard Sentence ---
-         // Check if value actually changed
-         if (sentenceObj.values[label] !== value) {
-            sentenceObj.values[label] = value; // Store value using label as key
-            valueChanged = true;
-         }
-    } else {
-        console.error(`Could not determine value storage location for field in sentence ${sentenceId}`);
-    }
-
-    // Save the state only if a value actually changed
-    if (valueChanged) {
-        // console.log(`Value saved for ${sentenceId} - ${label}:`, value); // Debug log
-        saveState();
-    }
-}
-
-
-/**
- * Collects all current inline field values from the DOM and saves them
- * back into the dchartSections data structure. Uses label mapping.
- * Primarily used as a safeguard before generating final text or saving state explicitly.
- */
-function storeAllInlineValues() {
-  let changesMade = false; // Track if any value actually changed
-  dchartSections.forEach(section => {
-    if (!section.sentences) return;
-    section.sentences.forEach(sentenceObj => {
-      const li = document.querySelector(`li[data-id="${sentenceObj.id}"]`);
-      if (!li) return; // Skip if element not in DOM
-
-      initializeSentenceValues(sentenceObj); // Ensure value structures exist
-
-      if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
-        // --- Tabbed Sentence ---
-        sentenceObj.tabs.forEach((tab, tabIndex) => {
-          const tabPane = li.querySelector(`.tab-pane[data-tab-index="${tabIndex}"]`);
-          if (!tabPane) return; // Skip if tab pane not found
-          // Ensure the value storage object exists for this tab
-          if (!sentenceObj.tabValues[tabIndex]) sentenceObj.tabValues[tabIndex] = {};
-          // Iterate through fields within this tab pane
-          tabPane.querySelectorAll(".inline-field[data-label]").forEach(field => {
-            const label = field.dataset.label;
-            const newValue = field.value;
-            if (sentenceObj.tabValues[tabIndex][label] !== newValue) {
-                sentenceObj.tabValues[tabIndex][label] = newValue;
-                changesMade = true;
-            }
-          });
-        });
-      } else {
-        // --- Standard Sentence ---
-        // Ensure the value storage object exists
-        if (!sentenceObj.values) sentenceObj.values = {};
-        // Iterate through fields directly under the li (excluding those in tab panes)
-        li.querySelectorAll(".inline-field[data-label]:not(.tab-pane .inline-field)").forEach(field => {
-           const label = field.dataset.label;
-           const newValue = field.value;
-           if (sentenceObj.values[label] !== newValue) {
-               sentenceObj.values[label] = newValue;
-               changesMade = true;
-           }
-        });
-      }
-    });
-  });
-  // console.log("storeAllInlineValues completed.", changesMade ? "Changes detected." : "No changes.");
-  // Return flag indicating if changes were made (optional)
-  return changesMade;
-}
-
-/**
- * Builds the HTML string for inline fields within a sentence text template.
- * Replaces placeholders like `[text:Label]` with corresponding input elements.
- * Uses the label ("Label") to link the input to the data storage object.
- * @param {string} text - The sentence template text containing placeholders.
- * @param {object} valuesObject - The object storing current values, keyed by placeholder label.
- * @returns {string} HTML string with placeholders replaced by input fields.
- */
-function buildInlineFields(textTemplate, valuesObject) {
-  if (!valuesObject) valuesObject = {}; // Ensure it's an object
-  // Remove any literal <br> tags from the template itself
-  const cleanText = (textTemplate || "").replace(/<br\s*\/?>/gi, "");
-
-  // Replace each placeholder found by the regex
-  return cleanText.replace(placeholderRegex, (match, type, label, options) => {
-    // Get the current value for this placeholder label from the values object
-    const currentValue = valuesObject[label] || "";
-
-    // --- Determine Options for Dropdowns ---
-    let dropdownOptionsArray = [];
-    if (options) { // Options defined directly in placeholder: "[customDropdown:Label:Opt1,Opt2]"
-      dropdownOptionsArray = options.split(",").map(x => x.trim());
-    } else if (globalDropdownOptions[label]) { // Options defined in globalDropdownOptions
-      dropdownOptionsArray = globalDropdownOptions[label];
-    }
-
-    // --- Generate HTML based on Placeholder Type ---
-    switch (type) {
-      case "customDropdown":
-        // Generate list items for the dropdown suggestions
-        const listItems = dropdownOptionsArray
-          .map(opt => `<li class="list-group-item" title="${opt}">${opt}</li>`) // Add title attribute
-          .join("");
-        // data-label is crucial for linking input to the stored value
-        return `
-          <div class="custom-dropdown">
-            <input
-              type="text"
-              class="inline-field custom-dropdown-input"
-              data-type="customDropdown"
-              data-label="${label}"
-              placeholder="${label}"
-              value="${currentValue}"
-              title="${currentValue || label}"
-              autocomplete="off"
-            />
-            <ul class="suggestions">${listItems}</ul>
-          </div>`;
-
-      case "text":
-        // Standard text input
-        // data-label links it to the stored value
-        return `<input
-                  type="text"
-                  class="inline-field"
-                  data-type="text"
-                  data-label="${label}"
-                  placeholder="${label}"
-                  value="${currentValue}"
-                  title="${currentValue || label}"
-                />`;
-
-      case "number":
-         // Number input (allows browser validation/spinners)
-         // data-label links it to the stored value
-        return `<input
-                  type="number"
-                  class="inline-field"
-                  data-type="number"
-                  data-label="${label}"
-                  placeholder="${label}"
-                  value="${currentValue}"
-                  title="${currentValue || label}"
-                />`;
-
-      case "dropdown": // Simple dropdown (rendered as text input for now, could be select)
-         // Render as text input, could potentially become a <select>
-         // data-label links it to the stored value
-         return `<input
-                  type="text"
-                  class="inline-field"
-                  data-type="dropdown"
-                  data-label="${label}"
-                  placeholder="${label}"
-                  value="${currentValue}"
-                  title="${currentValue || label}"
-                />`;
-
-      default:
-        // If type is unknown, return the original placeholder text
-        console.warn(`Unknown placeholder type: ${type}`);
-        return match;
-    }
-  });
-}
-
-
-// --- Drag and Drop (SortableJS) ---
-
-/** Initializes SortableJS for all sentence lists, enabling drag-and-drop. */
-function makeSentencesDraggable() {
-  const lists = document.querySelectorAll(".sentence-list");
-  lists.forEach(ul => {
-    // Destroy previous instance if exists to prevent memory leaks or duplicate handlers
-    const existingSortable = Sortable.get(ul);
-    if (existingSortable) {
-        existingSortable.destroy();
-    }
-
-    // Create new Sortable instance
-    new Sortable(ul, {
-      animation: 150, // Animation speed
-      group: { name: "dchartGroup", pull: true, put: true }, // Allow dragging between lists in this group
-      handle: ".drag-handle", // Specify drag handle element
-      ghostClass: "sortable-ghost", // Class for the visual ghost element
-      chosenClass: "sortable-chosen", // Class for the chosen element
-      dragClass: "sortable-drag",   // Class for the dragged element
-      onEnd: handleDragEnd,         // Function to call when drag operation ends
-    });
-  });
-}
-
-/** Handles the end of a drag-and-drop operation to update the data structure. */
-function handleDragEnd(evt) {
-    const itemEl = evt.item; // The dragged list item element (li)
-    const sentenceId = itemEl.dataset.id;
-    const toList = evt.to;   // The target list element (ul)
-    const fromList = evt.from; // The source list element (ul)
-    const oldIndex = evt.oldDraggableIndex; // Original index within source list
-    const newIndex = evt.newDraggableIndex; // New index within target list
-    const toPartLabel = toList.dataset.part;   // Identifier of the target section
-    const fromPartLabel = fromList.dataset.part; // Identifier of the source section
-
-    console.log(`Sentence ${sentenceId} moved from ${fromPartLabel}[${oldIndex}] to ${toPartLabel}[${newIndex}]`);
-
-    // --- Update Data Structure ---
-    let movedSentence;
-
-    // 1. Find and Remove from Source Section Data
-    const fromSection = dchartSections.find(s => s.part === fromPartLabel);
-    if (fromSection && fromSection.sentences && oldIndex < fromSection.sentences.length) {
-        // Remove the sentence object from the source array based on its old index
-        movedSentence = fromSection.sentences.splice(oldIndex, 1)[0];
-        // Verify we got the right sentence (optional but good practice)
-        if (!movedSentence || movedSentence.id !== sentenceId) {
-             console.error("Mismatch when removing sentence during drag! Expected:", sentenceId, "Got:", movedSentence?.id);
-             // Attempt recovery or rebuild UI? For now, log error and potentially stop.
-             buildSectionsUI(); // Rebuild UI as fallback
-             return;
-        }
-    } else {
-        console.error(`Could not find source section "${fromPartLabel}" or sentence at index ${oldIndex} for ID ${sentenceId}.`);
-        buildSectionsUI(); // Rebuild UI as fallback
-        return; // Stop processing if we couldn't remove the source
-    }
-
-    // 2. Add to Target Section Data
-    if (movedSentence) {
-        const toSection = dchartSections.find(s => s.part === toPartLabel);
-        if (toSection) {
-            if (!toSection.sentences) toSection.sentences = []; // Ensure target sentences array exists
-            // Insert the moved sentence object into the target array at the new index
-            toSection.sentences.splice(newIndex, 0, movedSentence);
-        } else {
-            console.error(`Target section "${toPartLabel}" not found in data.`);
-            // Should we put the sentence back in the source? Rebuild UI?
-            // For now, put it back in source data approximately where it was
-            fromSection.sentences.splice(oldIndex, 0, movedSentence); // Put back
-            buildSectionsUI(); // Rebuild UI as fallback
-            return;
-        }
-    }
-
-    // --- Save Updated State ---
+    } else { buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); } // Fallback rebuild
     saveState();
-
-    // --- Update DOM Attributes (Optional but good practice) ---
-    // SortableJS handles the DOM move, but update data-part attribute if section changed
-    if (fromPartLabel !== toPartLabel) {
-        itemEl.dataset.part = toPartLabel;
-    }
-    // No buildSectionsUI() needed here, as SortableJS updated the DOM visually.
+}
+function removeSentence(partLabel, sentenceId) {
+    const section = dchartSections.find(s => s.part === partLabel); if (!section || !section.sentences) return;
+    const index = section.sentences.findIndex(s => s.id === sentenceId);
+    if (index > -1) { section.sentences.splice(index, 1); console.log(`Sentence removed data: ${sentenceId}`); const li = document.querySelector(`li[data-id="${sentenceId}"]`);
+        if (li) { li.remove(); console.log(`Sentence removed DOM: ${sentenceId}`); }
+        else { buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); } // Fallback rebuild
+        saveState();
+    } else console.warn(`Sentence ID ${sentenceId} not found.`);
+}
+function switchTab(sentenceId, tabIndex) {
+    const sentenceObj = findSentenceById(sentenceId); if (!sentenceObj || !sentenceObj.tabs) return; if (tabIndex < 0 || tabIndex >= sentenceObj.tabs.length) return;
+    sentenceObj.activeTabIndex = tabIndex; console.log(`Switched tab ${tabIndex} for ${sentenceId}`); const li = document.querySelector(`li[data-id="${sentenceId}"]`);
+    if (li) { const tabButtons = li.querySelectorAll('.tabs-container .tab-button'); tabButtons.forEach((btn, index) => btn.classList.toggle('active', index === tabIndex));
+        const tabPanes = li.querySelectorAll('.tab-pane'); tabPanes.forEach((pane, index) => { const isActive = index === tabIndex; pane.classList.toggle('active', isActive);
+             if (isActive) { const tabContent = sentenceObj.tabs[index].text || ""; const tabValues = sentenceObj.tabValues[index] || {}; pane.innerHTML = buildInlineFields(tabContent, tabValues);
+                 attachDropdownLogicForElement(pane); attachBlurListenersForElement(pane); attachInputSizingListenersForElement(pane); adjustAllInitialSizesForElement(pane); } });
+    } else { buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); } // Fallback rebuild
+    saveState();
 }
 
+// --- Input Value Handling --- (attachBlurListeners, handleInlineFieldBlurDelegated, handleInlineFieldBlur, storeAllInlineValues - unchanged)
+function attachBlurListeners() { // Attaches general blur listener for SAVING data
+    const container = document.getElementById('sectionContainer'); if (!container) return;
+    container.removeEventListener('blur', handleInlineFieldBlurDelegated, true); container.addEventListener('blur', handleInlineFieldBlurDelegated, true);
+}
+function attachBlurListenersForElement(element) { element.querySelectorAll('.inline-field[data-label]').forEach(field => { field.removeEventListener('blur', handleInlineFieldBlur); field.addEventListener('blur', handleInlineFieldBlur); }); }
+function handleInlineFieldBlurDelegated(event) { if (event.target.matches('.inline-field[data-label]')) handleInlineFieldBlur(event); }
+function handleInlineFieldBlur(event) { // Saves data on blur
+    const field = event.target; const label = field.dataset.label; const value = field.value; const li = field.closest('li[data-id]'); if (!li || !label) return;
+    const sentenceId = li.dataset.id; const sentenceObj = findSentenceById(sentenceId); if (!sentenceObj) return; const tabPane = field.closest('.tab-pane[data-tab-index]');
+    let valueChanged = false;
+    if (tabPane) { const tabIndex = parseInt(tabPane.dataset.tabIndex); if (!isNaN(tabIndex) && sentenceObj.tabValues?.[tabIndex]) { if (sentenceObj.tabValues[tabIndex][label] !== value) { sentenceObj.tabValues[tabIndex][label] = value; valueChanged = true; } } }
+    else if (sentenceObj.values) { if (sentenceObj.values[label] !== value) { sentenceObj.values[label] = value; valueChanged = true; } }
+    if (valueChanged) saveState();
+}
+function storeAllInlineValues() { let changesMade = false; dchartSections.forEach(section => { if (!section.sentences) return; section.sentences.forEach(sentenceObj => { const li = document.querySelector(`li[data-id="${sentenceObj.id}"]`); if (!li) return; initializeSentenceValues(sentenceObj);
+    if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) { sentenceObj.tabs.forEach((tab, tabIndex) => { const tabPane = li.querySelector(`.tab-pane[data-tab-index="${tabIndex}"]`); if (!tabPane) return; if (!sentenceObj.tabValues[tabIndex]) sentenceObj.tabValues[tabIndex] = {};
+        tabPane.querySelectorAll(".inline-field[data-label]").forEach(field => { const label = field.dataset.label; const newValue = field.value; if (sentenceObj.tabValues[tabIndex][label] !== newValue) { sentenceObj.tabValues[tabIndex][label] = newValue; changesMade = true; } }); });
+    } else { if (!sentenceObj.values) sentenceObj.values = {}; li.querySelectorAll(".inline-field[data-label]:not(.tab-pane .inline-field)").forEach(field => { const label = field.dataset.label; const newValue = field.value; if (sentenceObj.values[label] !== newValue) { sentenceObj.values[label] = newValue; changesMade = true; } }); } }); }); return changesMade; }
 
-// --- Custom Dropdown Logic ---
+// --- HTML Building for Inline Fields --- (buildInlineFields - unchanged)
+function buildInlineFields(textTemplate, valuesObject) { if (!valuesObject) valuesObject = {}; const cleanText = (textTemplate || "").replace(/<br\s*\/?>/gi, "");
+  return cleanText.replace(placeholderRegex, (match, type, label, options) => { const currentValue = valuesObject[label] || ""; let dropdownOptionsArray = [];
+    if (options) dropdownOptionsArray = options.split(",").map(x => x.trim()); else if (globalDropdownOptions[label]) dropdownOptionsArray = globalDropdownOptions[label];
+    switch (type) { case "customDropdown": const listItems = dropdownOptionsArray.map(opt => `<li class="list-group-item" title="${opt}">${opt}</li>`).join(""); return `
+          <div class="custom-dropdown"><input type="text" class="inline-field custom-dropdown-input" data-type="customDropdown" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}" autocomplete="off"/><ul class="suggestions">${listItems}</ul></div>`;
+      case "text": return `<input type="text" class="inline-field" data-type="text" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}"/>`;
+      case "number": return `<input type="number" class="inline-field" data-type="number" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}"/>`;
+      case "dropdown": return `<input type="text" class="inline-field" data-type="dropdown" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}"/>`;
+      default: console.warn(`Unknown type: ${type}`); return match; } }); }
 
-/** Attaches interactive logic (focus, blur, keydown, click) to all custom dropdowns. */
+// --- Drag and Drop --- (makeSentencesDraggable, handleDragEnd - unchanged)
+function makeSentencesDraggable() { const lists = document.querySelectorAll(".sentence-list"); lists.forEach(ul => { const existingSortable = Sortable.get(ul); if (existingSortable) existingSortable.destroy(); new Sortable(ul, { animation: 150, group: { name: "dchartGroup", pull: true, put: true }, handle: ".drag-handle", ghostClass: "sortable-ghost", chosenClass: "sortable-chosen", dragClass: "sortable-drag", onEnd: handleDragEnd, }); }); }
+function handleDragEnd(evt) { const itemEl = evt.item; const sentenceId = itemEl.dataset.id; const toList = evt.to; const fromList = evt.from; const oldIndex = evt.oldDraggableIndex; const newIndex = evt.newDraggableIndex; const toPartLabel = toList.dataset.part; const fromPartLabel = fromList.dataset.part; console.log(`Sentence ${sentenceId} moved ${fromPartLabel}[${oldIndex}]->${toPartLabel}[${newIndex}]`); let movedSentence; const fromSection = dchartSections.find(s => s.part === fromPartLabel);
+    if (fromSection?.sentences && oldIndex < fromSection.sentences.length) { movedSentence = fromSection.sentences.splice(oldIndex, 1)[0]; if (!movedSentence || movedSentence.id !== sentenceId) { console.error("Mismatch remove drag!"); buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); return; } }
+    else { console.error(`Cannot find source ${fromPartLabel} or sentence at ${oldIndex}`); buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); return; }
+    if (movedSentence) { const toSection = dchartSections.find(s => s.part === toPartLabel); if (toSection) { if (!toSection.sentences) toSection.sentences = []; toSection.sentences.splice(newIndex, 0, movedSentence); }
+    else { console.error(`Target section ${toPartLabel} not found.`); fromSection.sentences.splice(oldIndex, 0, movedSentence); buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); return; } }
+    saveState(); if (fromPartLabel !== toPartLabel) itemEl.dataset.part = toPartLabel; }
+
+// --- Custom Dropdown Logic --- (REVISED attachDropdownLogic and added handleDropdownBlur)
 function attachDropdownLogic() {
-  // Use delegation on a static parent if possible, otherwise query all
    const container = document.getElementById('sectionContainer');
    if (container) {
-       // --- Focus ---
+       // --- Focus (Shows Suggestions) ---
        container.removeEventListener('focus', handleDropdownFocus, true);
        container.addEventListener('focus', handleDropdownFocus, true);
-       // --- Blur ---
-       // Blur is already handled by the general inline field blur listener
-       // --- Keydown ---
+       // --- Keydown (Handles Arrow Keys, Enter, Esc) ---
        container.removeEventListener('keydown', handleDropdownKeydown);
        container.addEventListener('keydown', handleDropdownKeydown);
-       // --- Mousedown on suggestions ---
+       // --- Mousedown on suggestions (Selects Item) ---
        container.removeEventListener('mousedown', handleDropdownSuggestionClick);
        container.addEventListener('mousedown', handleDropdownSuggestionClick);
-   } else {
-       // Fallback if container not found (shouldn't happen)
-       document.querySelectorAll(".custom-dropdown").forEach(dropdown => {
-           attachDropdownLogicForElement(dropdown); // Attach individually
-       });
+       // --- Blur (Hides Suggestions - specific to dropdown inputs) ---
+       container.removeEventListener('blur', handleDropdownBlur, true); // Use capture phase
+       container.addEventListener('blur', handleDropdownBlur, true);
+   } else { // Fallback if container not found
+       document.querySelectorAll(".custom-dropdown").forEach(dropdown => attachDropdownLogicForElement(dropdown));
    }
 }
-
-/** Attaches dropdown logic only within a specific newly created element (e.g., after adding sentence). */
-function attachDropdownLogicForElement(element) {
-    // Find dropdowns within the element or if the element itself is the dropdown container
+function attachDropdownLogicForElement(element) { // For newly added elements
     const dropdowns = element.matches('.custom-dropdown') ? [element] : element.querySelectorAll(".custom-dropdown");
-
     dropdowns.forEach(dropdown => {
         const input = dropdown.querySelector(".custom-dropdown-input");
         const suggestionBox = dropdown.querySelector(".suggestions");
         if (!input || !suggestionBox) return;
-
-        // --- Focus ---
-        input.removeEventListener('focus', handleDropdownFocusDirect);
-        input.addEventListener('focus', handleDropdownFocusDirect);
-        // --- Keydown ---
-        input.removeEventListener('keydown', handleDropdownKeydownDirect);
-        input.addEventListener('keydown', handleDropdownKeydownDirect);
-        // --- Mousedown on suggestions ---
-        suggestionBox.removeEventListener('mousedown', handleDropdownSuggestionClickDirect);
-        suggestionBox.addEventListener('mousedown', handleDropdownSuggestionClickDirect);
-
-        // Blur is handled by the global inline field blur listener
+        input.removeEventListener('focus', handleDropdownFocusDirect); input.addEventListener('focus', handleDropdownFocusDirect);
+        input.removeEventListener('keydown', handleDropdownKeydownDirect); input.addEventListener('keydown', handleDropdownKeydownDirect);
+        suggestionBox.removeEventListener('mousedown', handleDropdownSuggestionClickDirect); suggestionBox.addEventListener('mousedown', handleDropdownSuggestionClickDirect);
+        // Add specific blur listener for hiding suggestions on newly added elements
+        input.removeEventListener('blur', handleDropdownBlurDirect);
+        input.addEventListener('blur', handleDropdownBlurDirect);
     });
 }
+function handleDropdownFocus(event) { if (event.target.matches('.custom-dropdown-input')) showDropdownSuggestions(event.target); }
+function handleDropdownFocusDirect(event) { showDropdownSuggestions(event.target); }
+function showDropdownSuggestions(inputElement) { const dropdown = inputElement.closest('.custom-dropdown'); if (!dropdown) return; const suggestionBox = dropdown.querySelector(".suggestions"); if (suggestionBox) suggestionBox.style.display = "block"; }
+function handleDropdownKeydown(event) { if (event.target.matches('.custom-dropdown-input')) processDropdownKeydown(event.target, event); }
+function handleDropdownKeydownDirect(event) { processDropdownKeydown(event.target, event); }
+function processDropdownKeydown(inputElement, event) { const dropdown = inputElement.closest('.custom-dropdown'); if (!dropdown) return; const suggestionBox = dropdown.querySelector(".suggestions"); if (!suggestionBox || suggestionBox.style.display === 'none') return; const items = Array.from(suggestionBox.querySelectorAll("li")); if (items.length === 0) return; let focusedIndex = items.findIndex(item => item.classList.contains('highlight'));
+    switch (event.key) { case 'ArrowUp': event.preventDefault(); focusedIndex = (focusedIndex <= 0) ? items.length - 1 : focusedIndex - 1; highlightDropdownItem(items, focusedIndex); break; case 'ArrowDown': event.preventDefault(); focusedIndex = (focusedIndex < 0 || focusedIndex >= items.length - 1) ? 0 : focusedIndex + 1; highlightDropdownItem(items, focusedIndex); break; case 'Enter': case 'Tab': if (focusedIndex >= 0 && focusedIndex < items.length) { event.preventDefault(); selectDropdownItem(inputElement, items[focusedIndex]); hideDropdownSuggestions(inputElement); } else if (event.key === 'Enter') { event.preventDefault(); hideDropdownSuggestions(inputElement); inputElement.blur(); } break; case 'Escape': event.preventDefault(); hideDropdownSuggestions(inputElement); break; } }
+function handleDropdownSuggestionClick(event) { if (event.target.matches('.custom-dropdown .suggestions li')) { const input = event.target.closest('.custom-dropdown')?.querySelector('.custom-dropdown-input'); if (input) { selectDropdownItem(input, event.target); hideDropdownSuggestions(input); handleInlineFieldBlur({ target: input }); } } }
+function handleDropdownSuggestionClickDirect(event) { if (event.target.matches('li')) { const input = event.currentTarget.closest('.custom-dropdown')?.querySelector('.custom-dropdown-input'); if (input) { selectDropdownItem(input, event.target); hideDropdownSuggestions(input); handleInlineFieldBlur({ target: input }); } } }
+function highlightDropdownItem(items, index) { items.forEach((item, i) => { item.classList.toggle("highlight", i === index); if (i === index) item.scrollIntoView({ block: 'nearest' }); }); }
+function selectDropdownItem(inputElement, selectedLi) { inputElement.value = selectedLi.textContent.trim(); inputElement.title = inputElement.value; adjustInputWidth(inputElement); /* Adjust width after selecting */ }
+function hideDropdownSuggestions(inputElement) { const dropdown = inputElement.closest('.custom-dropdown'); if (!dropdown) return; const suggestionBox = dropdown.querySelector(".suggestions"); if (suggestionBox) { suggestionBox.style.display = "none"; const items = Array.from(suggestionBox.querySelectorAll("li")); highlightDropdownItem(items, -1); } }
 
-// --- Event Handlers for Custom Dropdowns (Direct & Delegated) ---
-
-function handleDropdownFocus(event) {
+/** Handles blur event specifically for custom dropdown inputs to hide suggestions. */
+function handleDropdownBlur(event) { // Delegated version
     if (event.target.matches('.custom-dropdown-input')) {
-        showDropdownSuggestions(event.target);
+        processDropdownBlur(event.target);
     }
 }
-function handleDropdownFocusDirect(event) { // For non-delegated attachment
-    showDropdownSuggestions(event.target);
+/** Handles blur event specifically for custom dropdown inputs (direct attach version). */
+function handleDropdownBlurDirect(event) { // Direct attach version
+    processDropdownBlur(event.target);
 }
-function showDropdownSuggestions(inputElement) {
-    const dropdown = inputElement.closest('.custom-dropdown');
-    if (!dropdown) return;
-    const suggestionBox = dropdown.querySelector(".suggestions");
-    if (suggestionBox) {
-        suggestionBox.style.display = "block";
-        // Optional: Filter suggestions based on input value?
-    }
-}
-
-function handleDropdownKeydown(event) {
-     if (event.target.matches('.custom-dropdown-input')) {
-        processDropdownKeydown(event.target, event);
-    }
-}
-function handleDropdownKeydownDirect(event) { // For non-delegated attachment
-    processDropdownKeydown(event.target, event);
-}
-function processDropdownKeydown(inputElement, event) {
-    const dropdown = inputElement.closest('.custom-dropdown');
-    if (!dropdown) return;
-    const suggestionBox = dropdown.querySelector(".suggestions");
-    if (!suggestionBox || suggestionBox.style.display === 'none') return; // Ignore if suggestions hidden
-
-    const items = Array.from(suggestionBox.querySelectorAll("li"));
-    if (items.length === 0) return; // No items to navigate
-
-    let focusedIndex = items.findIndex(item => item.classList.contains('highlight'));
-
-    switch (event.key) {
-        case 'ArrowUp':
-            event.preventDefault();
-            focusedIndex = (focusedIndex <= 0) ? items.length - 1 : focusedIndex - 1;
-            highlightDropdownItem(items, focusedIndex);
-            break;
-        case 'ArrowDown':
-            event.preventDefault();
-            focusedIndex = (focusedIndex < 0 || focusedIndex >= items.length - 1) ? 0 : focusedIndex + 1;
-            highlightDropdownItem(items, focusedIndex);
-            break;
-        case 'Enter':
-        case 'Tab': // Also select on Tab
-            if (focusedIndex >= 0 && focusedIndex < items.length) {
-                event.preventDefault(); // Prevent default tab behavior or form submission
-                selectDropdownItem(inputElement, items[focusedIndex]);
-                hideDropdownSuggestions(inputElement);
-                // Move focus away or to next element? Input blur will handle saving.
-            } else if (event.key === 'Enter') {
-                 // Allow Enter to just confirm typed value if nothing highlighted
-                 event.preventDefault();
-                 hideDropdownSuggestions(inputElement);
-                 inputElement.blur(); // Trigger save
-            }
-            break;
-        case 'Escape':
-            event.preventDefault();
-            hideDropdownSuggestions(inputElement);
-            break;
-    }
-}
-
-function handleDropdownSuggestionClick(event) {
-    if (event.target.matches('.custom-dropdown .suggestions li')) {
-        const input = event.target.closest('.custom-dropdown')?.querySelector('.custom-dropdown-input');
-        if (input) {
-            selectDropdownItem(input, event.target);
-            hideDropdownSuggestions(input);
-            // Blur might happen automatically, but ensure save is triggered
-            handleInlineFieldBlur({ target: input });
+/** Logic to hide dropdown on blur, using a timeout. */
+function processDropdownBlur(inputElement) {
+    // Use setTimeout to allow clicks on suggestions to register first
+    setTimeout(() => {
+        const dropdownContainer = inputElement.closest('.custom-dropdown');
+        // Hide if focus has moved outside the dropdown container entirely
+        if (dropdownContainer && !dropdownContainer.contains(document.activeElement)) {
+             hideDropdownSuggestions(inputElement);
+        } else if (!dropdownContainer) {
+            // Fallback if somehow container isn't found, still hide
+             hideDropdownSuggestions(inputElement);
         }
-    }
+        // If focus moved to a suggestion LI, the mousedown handler should have already selected/hidden.
+    }, 150); // Delay in ms (adjust if needed)
 }
 
-function handleDropdownSuggestionClickDirect(event) { // For non-delegated attachment
-     if (event.target.matches('li')) {
-        const input = event.currentTarget.closest('.custom-dropdown')?.querySelector('.custom-dropdown-input');
-         if (input) {
-            selectDropdownItem(input, event.target);
-            hideDropdownSuggestions(input);
-            handleInlineFieldBlur({ target: input });
-        }
-     }
-}
+// --- Final Text Generation --- (generateBtn handler, generateFinalText - unchanged)
+document.getElementById("generateBtn").addEventListener("click", () => { const finalTextArea = document.getElementById("finalText"); const changesDetected = storeAllInlineValues(); if (changesDetected) { saveState(); console.log("Values updated."); } const generatedText = generateFinalText(); const currentText = finalTextArea.value.trim(); if (currentText && currentText !== generatedText.trim()) { showConfirmationModal("Generate", "Override current narrative?", "", () => { finalTextArea.value = generatedText; }, () => {}); } else { finalTextArea.value = generatedText; } });
+function generateFinalText() { console.log("Generating final text..."); const includeSectionTitles = document.getElementById("toggleSectionTitles").checked; let finalOutput = ""; dchartSections.forEach(section => { let sectionText = ""; let sectionHasContent = false; if (!section.sentences) return; section.sentences.forEach(sentenceObj => { let currentSentenceText = "";
+    if (sentenceObj.tabs?.length) { const activeTab = sentenceObj.tabs[sentenceObj.activeTabIndex]; if (!activeTab) return; const tabValues = sentenceObj.tabValues[sentenceObj.activeTabIndex] || {}; currentSentenceText = (activeTab.text || "").replace(placeholderRegex, (match, type, label) => (tabValues[label] || "").trim() || `[${label}]`); }
+    else { const values = sentenceObj.values || {}; currentSentenceText = (sentenceObj.text || "").replace(placeholderRegex, (match, type, label) => (values[label] || "").trim() || `[${label}]`); }
+    currentSentenceText = currentSentenceText.replace(/<br\s*\/?>/gi, "").replace(/\s+/g, ' ').trim(); if (currentSentenceText) { sectionText += currentSentenceText + " "; sectionHasContent = true; } });
+    if (sectionHasContent) { if (section.includeTitle && includeSectionTitles) finalOutput += section.part + ":\n"; finalOutput += sectionText.trim() + "\n\n"; } }); console.log("Final text generated."); return finalOutput.trim(); }
 
+// --- Utility Functions --- (findSentenceById - unchanged)
+function findSentenceById(id) { for (const sec of dchartSections) { if (!sec.sentences) continue; const sentence = sec.sentences.find(s => s.id === id); if (sentence) return sentence; } console.warn(`Sentence ID ${id} not found.`); return null; }
 
-function highlightDropdownItem(items, index) {
-    items.forEach((item, i) => {
-        item.classList.toggle("highlight", i === index);
-        if (i === index) {
-            // Ensure the highlighted item is visible within the scrollable suggestions box
-            item.scrollIntoView({ block: 'nearest' });
-        }
-    });
-}
+// --- Button Event Listeners --- (copyBtn, newRunBtn, toggleSectionTitles - unchanged)
+document.getElementById("copyBtn").addEventListener("click", () => { const finalTextArea = document.getElementById("finalText"); const textToCopy = finalTextArea.value.trim(); if (!textToCopy) { showConfirmationModal("Copy", "Nothing to copy!", "", () => {}, () => {}, true); return; } navigator.clipboard.writeText(textToCopy).then(() => { console.log("Copied."); showConfirmationModal("Copied", "Copied!<br><br>Start new run?", "Clears work.", () => resetAll(), () => {}); }).catch(err => { console.error("Copy failed: ", err); showConfirmationModal("Copy Failed", "Could not copy.", "", () => {}, () => {}, true); }); });
+document.getElementById("newRunBtn").addEventListener("click", () => { if (localStorage.getItem(LOCAL_STORAGE_KEY)) { showConfirmationModal("New Run", "Discard current narrative?", "Saved data clears.", () => resetAll(), () => {}); } else { resetAll(); } });
+document.getElementById('toggleSectionTitles').addEventListener('change', () => { console.log("Titles toggled."); });
 
-function selectDropdownItem(inputElement, selectedLi) {
-    inputElement.value = selectedLi.textContent.trim();
-    inputElement.title = inputElement.value; // Update title attribute
-    // Trigger change event manually if needed by other listeners (blur usually sufficient)
-    // inputElement.dispatchEvent(new Event('change', { bubbles: true }));
-}
+// --- Input Auto-Sizing --- (attachInputSizingListeners, attachInputSizingListenersForElement, handleAutoSizingInput, handleAutoSizingInputDirect, adjustTextareaHeight, adjustInputWidth, adjustAllInitialSizes, adjustAllInitialSizesForElement - unchanged)
+function attachInputSizingListeners() { const container = document.getElementById('sectionContainer'); if (container) { container.removeEventListener('input', handleAutoSizingInput); container.addEventListener('input', handleAutoSizingInput); } }
+function attachInputSizingListenersForElement(element) { element.querySelectorAll('.inline-field, .auto-height-textarea').forEach(input => { input.removeEventListener('input', handleAutoSizingInputDirect); input.addEventListener('input', handleAutoSizingInputDirect); }); }
+function handleAutoSizingInput(event) { if (event.target.matches('.inline-field')) adjustInputWidth(event.target); else if (event.target.matches('.auto-height-textarea')) adjustTextareaHeight(event.target); }
+function handleAutoSizingInputDirect(event) { if (event.target.matches('.inline-field')) adjustInputWidth(event.target); else if (event.target.matches('.auto-height-textarea')) adjustTextareaHeight(event.target); }
+function adjustTextareaHeight(textarea) { if (!textarea) return; textarea.style.height = 'auto'; const newHeight = Math.max(textarea.scrollHeight, parseFloat(getComputedStyle(textarea).minHeight) || 0); textarea.style.height = `${newHeight}px`; }
+function adjustInputWidth(input) { if (!input || !widthMeasurerSpan) return; const inputStyle = window.getComputedStyle(input); widthMeasurerSpan.textContent = input.value || input.placeholder || ' '; widthMeasurerSpan.style.font = inputStyle.font; const contentWidth = widthMeasurerSpan.scrollWidth + 1; let maxWidth = input.parentElement.clientWidth * (MAX_INLINE_WIDTH_PERCENT / 100); if (!maxWidth || maxWidth <= MIN_INLINE_WIDTH) maxWidth = window.innerWidth * 0.7; const newWidth = Math.max(MIN_INLINE_WIDTH, Math.min(contentWidth, maxWidth)); input.style.width = `${newWidth}px`; }
+function adjustAllInitialSizes() { document.querySelectorAll('.inline-field').forEach(input => adjustInputWidth(input)); document.querySelectorAll('.auto-height-textarea').forEach(textarea => adjustTextareaHeight(textarea)); }
+function adjustAllInitialSizesForElement(element) { element.querySelectorAll('.inline-field').forEach(input => adjustInputWidth(input)); element.querySelectorAll('.auto-height-textarea').forEach(textarea => adjustTextareaHeight(textarea)); }
 
-function hideDropdownSuggestions(inputElement) {
-     const dropdown = inputElement.closest('.custom-dropdown');
-    if (!dropdown) return;
-    const suggestionBox = dropdown.querySelector(".suggestions");
-    if (suggestionBox) {
-        suggestionBox.style.display = "none";
-         // Clear highlight when hiding
-        const items = Array.from(suggestionBox.querySelectorAll("li"));
-        highlightDropdownItem(items, -1); // -1 clears highlight
-    }
-}
-
-
-// --- Final Text Generation ---
-
-/** Generate button click handler */
-document.getElementById("generateBtn").addEventListener("click", () => {
-  const finalTextArea = document.getElementById("finalText");
-  // Ensure latest values from DOM are captured in the data structure first
-  const changesDetected = storeAllInlineValues();
-  if (changesDetected) {
-      saveState(); // Save if storeAllInlineValues found changes
-      console.log("Values updated before generating text.");
-  }
-
-  const generatedText = generateFinalText(); // Generate text from the data structure
-
-  // Ask for confirmation only if text exists and is different from new text
-  const currentText = finalTextArea.value.trim();
-  if (currentText && currentText !== generatedText.trim()) {
-    showConfirmationModal(
-      "Generate Final Text",
-      "This will override the current final narrative. Continue?",
-      "",
-      () => { finalTextArea.value = generatedText; }, // Yes callback
-      () => {} // No callback
-    );
-  } else {
-    // If no current text or text is the same, just update
-    finalTextArea.value = generatedText;
-  }
-});
-
-/**
- * Constructs the final narrative string from the dchartSections data.
- * Iterates through sections and sentences, replacing placeholders with stored values.
- * @returns {string} The generated narrative text.
- */
-function generateFinalText() {
-  console.log("Generating final text...");
-  const includeSectionTitles = document.getElementById("toggleSectionTitles").checked;
-  let finalOutput = ""; // Accumulator for the final text
-
-  dchartSections.forEach(section => {
-    let sectionText = ""; // Accumulator for the current section's text
-    let sectionHasContent = false; // Flag if section contributes text
-
-    if (!section.sentences) return; // Skip if section has no sentences
-
-    // Iterate through sentences in the current section
-    section.sentences.forEach(sentenceObj => {
-        let currentSentenceText = ""; // Text for this specific sentence
-        if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
-            // --- Tabbed Sentence ---
-            const activeTab = sentenceObj.tabs[sentenceObj.activeTabIndex];
-            if (!activeTab) return; // Skip if active tab invalid
-            const tabValues = sentenceObj.tabValues[sentenceObj.activeTabIndex] || {};
-            // Replace placeholders in the active tab's text
-            currentSentenceText = (activeTab.text || "").replace(placeholderRegex, (match, type, label) => {
-                 // Use stored value, trim it. If empty, keep the original placeholder label.
-                 return (tabValues[label] || "").trim() || `[${label}]`;
-            });
-        } else {
-            // --- Standard Sentence ---
-            const values = sentenceObj.values || {};
-             // Replace placeholders in the sentence text
-            currentSentenceText = (sentenceObj.text || "").replace(placeholderRegex, (match, type, label) => {
-                 return (values[label] || "").trim() || `[${label}]`;
-            });
-        }
-
-        // Clean up the processed sentence text (remove extra spaces, line breaks)
-        currentSentenceText = currentSentenceText.replace(/<br\s*\/?>/gi, "").replace(/\s+/g, ' ').trim();
-
-        // Add the processed sentence to the section text if it's not empty
-        if (currentSentenceText) {
-            sectionText += currentSentenceText + " "; // Add space after each sentence
-            sectionHasContent = true; // Mark that this section has content
-        }
-    }); // End sentence loop
-
-    // If the section had content, add it to the final output
-    if (sectionHasContent) {
-        // Prepend section title if enabled
-        if (section.includeTitle && includeSectionTitles) {
-            finalOutput += section.part + ":\n"; // Add title and newline
-        }
-        // Add the trimmed section text and two newlines for spacing
-        finalOutput += sectionText.trim() + "\n\n";
-    }
-    // If section had no content, nothing is added to finalOutput for this section
-  }); // End section loop
-
-  console.log("Final text generated.");
-  return finalOutput.trim(); // Return the final accumulated text, trimmed
-}
-
-
-// --- Utility Functions ---
-
-/** Helper to find a sentence object by its ID in the dchartSections data. */
-function findSentenceById(id) {
-  for (const sec of dchartSections) {
-    if (!sec.sentences) continue; // Skip if section has no sentences array
-    const sentence = sec.sentences.find(s => s.id === id);
-    if (sentence) return sentence;
-  }
-  console.warn(`Sentence object with ID ${id} not found in dchartSections.`);
-  return null; // Return null if not found
-}
-
-// --- Event Listeners for Buttons ---
-
-/** Copy button click handler */
-document.getElementById("copyBtn").addEventListener("click", () => {
-  const finalTextArea = document.getElementById("finalText");
-  const textToCopy = finalTextArea.value.trim();
-
-  if (!textToCopy) {
-    // Show simple info modal if nothing to copy
-    showConfirmationModal("Copy to Clipboard", "Nothing to copy! Generate the text first.", "", () => {}, () => {}, true); // Single OK button
-    return;
-  }
-
-  // Use Clipboard API
-  navigator.clipboard.writeText(textToCopy)
-    .then(() => {
-      console.log("Text copied to clipboard.");
-      // Ask if user wants to start a new run after successful copy
-      showConfirmationModal(
-        "Copy Successful",
-        "The final narrative has been copied to the clipboard.<br><br>Would you like to start a new run?",
-        "This will clear the current narrative but will not affect the clipboard.",
-        () => resetAll(), // Yes: Reset
-        () => {}          // No: Do nothing
-      );
-    })
-    .catch(err => {
-      console.error("Failed to copy text: ", err);
-      // Show error modal
-      showConfirmationModal("Copy Failed", "Could not copy text to clipboard. Please try selecting and copying manually.", "", () => {}, () => {}, true); // Single OK button
-    });
-});
-
-/** New Run button click handler */
-document.getElementById("newRunBtn").addEventListener("click", () => {
-  // Check if there's potentially unsaved data (simple check: does generated text differ from saved state?)
-  // A more robust check might involve comparing current state to last saved state.
-  // For simplicity, just check if localStorage has data.
-  if (localStorage.getItem(LOCAL_STORAGE_KEY)) {
-      showConfirmationModal(
-        "Start New Run",
-        "This will discard your current narrative and start fresh. Are you sure?",
-        "Your saved data in the browser will be cleared.",
-        () => resetAll(), // Yes: Reset
-        () => {}          // No: Do nothing
-      );
-  } else {
-      // If no saved data, just reset without confirmation
-      resetAll();
-  }
-});
-
-/** Toggle Section Titles checkbox change handler */
-document.getElementById('toggleSectionTitles').addEventListener('change', () => {
-    // Optionally, regenerate text immediately when toggled? Or just let user click Generate again.
-    // For now, do nothing - user needs to click Generate again.
-    console.log("Include section titles toggled.");
-});
-
-
-// --- Modal Dialog ---
-
-/**
- * Shows a Bootstrap confirmation modal.
- * @param {string} title - Modal title.
- * @param {string} message - Modal body message (can include HTML).
- * @param {string} disclaimer - Small text disclaimer at the bottom.
- * @param {function} callbackYes - Function to execute if "Yes" is clicked.
- * @param {function} callbackNo - Function to execute if "No" or "OK" is clicked.
- * @param {boolean} [singleButton=false] - If true, hides "Yes" and changes "No" to "OK".
- */
-function showConfirmationModal(title, message, disclaimer, callbackYes, callbackNo, singleButton = false) {
-    const modalEl = document.getElementById("confirmationModal");
-    if (!modalEl) return; // Safety check
-
-    const modalLabel = modalEl.querySelector("#confirmationModalLabel");
-    const modalBody = modalEl.querySelector("#confirmationModalBody");
-    const modalDisclaimer = modalEl.querySelector("#confirmationDisclaimer");
-    const yesBtn = modalEl.querySelector("#confirmYesBtn");
-    const noBtn = modalEl.querySelector("#confirmNoBtn"); // Also serves as OK button
-
-    if (!modalLabel || !modalBody || !modalDisclaimer || !yesBtn || !noBtn) {
-        console.error("Modal elements not found!");
-        return;
-    }
-
-    // Get or create Bootstrap modal instance
-    const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
-
-    // Set content
-    modalLabel.textContent = title || "Confirmation";
-    modalBody.innerHTML = message || ""; // Use innerHTML for potential <br> tags
-    modalDisclaimer.textContent = disclaimer || "";
-
-    // Configure buttons
-    yesBtn.style.display = singleButton ? 'none' : 'inline-block'; // Hide Yes if single button mode
-    noBtn.textContent = singleButton ? 'OK' : 'No'; // Change No button text if single button mode
-
-    // Assign callbacks using .onclick to overwrite previous ones reliably
-    yesBtn.onclick = () => {
-        bsModal.hide();
-        if (callbackYes && typeof callbackYes === 'function') callbackYes();
-    };
-    // The 'No' button's default data-bs-dismiss="modal" handles hiding.
-    // We just need to ensure the callback runs *after* hide or manage hide manually.
-    // Let's manage hide manually for consistency.
-    noBtn.onclick = () => {
-         bsModal.hide();
-         if (callbackNo && typeof callbackNo === 'function') callbackNo();
-    };
-
-    // Show the modal
-    bsModal.show();
-}
+// --- Modal Dialog --- (showConfirmationModal - unchanged)
+function showConfirmationModal(title, message, disclaimer, callbackYes, callbackNo, singleButton = false) { const modalEl = document.getElementById("confirmationModal"); if (!modalEl) return; const modalLabel = modalEl.querySelector("#confirmationModalLabel"); const modalBody = modalEl.querySelector("#confirmationModalBody"); const modalDisclaimer = modalEl.querySelector("#confirmationDisclaimer"); const yesBtn = modalEl.querySelector("#confirmYesBtn"); const noBtn = modalEl.querySelector("#confirmNoBtn"); if (!modalLabel || !modalBody || !modalDisclaimer || !yesBtn || !noBtn) { console.error("Modal elements not found!"); return; } const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl); modalLabel.textContent = title || "Confirmation"; modalBody.innerHTML = message || ""; modalDisclaimer.textContent = disclaimer || ""; yesBtn.style.display = singleButton ? 'none' : 'inline-block'; noBtn.textContent = singleButton ? 'OK' : 'No'; yesBtn.onclick = () => { bsModal.hide(); if (callbackYes && typeof callbackYes === 'function') callbackYes(); }; noBtn.onclick = () => { bsModal.hide(); if (callbackNo && typeof callbackNo === 'function') callbackNo(); }; bsModal.show(); }
 
 // --- End of Script ---
 </script>
