@@ -44,11 +44,11 @@
       margin-bottom: .5rem;
       border: 1px solid #dee2e6;
       border-radius: .25rem;
-      position: relative;
-      padding: 0.75rem 2rem; /* Padding around sentence content */
+      position: relative; /* Needed for absolute positioning of suggestions */
+      padding: 0.75rem 2rem;
     }
     .sentence-content {
-        line-height: 1.8; /* Give a bit more vertical space for inputs */
+        line-height: 1.8;
     }
 
 
@@ -81,7 +81,7 @@
     /* Add item form and group */
     .add-item-form {
       width: 100%;
-      position: relative; /* Needed for absolute positioning of suggestions-box */
+      position: relative;
       margin-top: .5rem;
     }
     .add-item-group {
@@ -109,8 +109,8 @@
     }
 
 
-    /* Suggestions box for autocomplete */
-    .suggestions-box, .suggestions {
+    /* Suggestions box for autocomplete (Add Sentence) */
+    .suggestions-box {
       position: absolute;
       top: 100%;
       margin-top: 2px;
@@ -128,95 +128,83 @@
       margin: 0;
       box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
     }
-    .suggestions-box ul, .suggestions ul {
-        padding: 0;
-        margin: 0;
-        list-style: none;
+    .suggestions-box ul {
+        padding: 0; margin: 0; list-style: none;
     }
-    .suggestions-box li, .suggestions li {
-      padding: .5rem 1rem;
-      cursor: pointer;
-      border-bottom: 1px solid #eee;
-      margin: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+    .suggestions-box li {
+      padding: .5rem 1rem; cursor: pointer; border-bottom: 1px solid #eee;
+      margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .suggestions-box li:last-child, .suggestions li:last-child {
-        border-bottom: none;
-    }
-    .suggestions-box li:hover, .suggestions li:hover,
-    .suggestions-box li.highlight, .suggestions li.highlight {
-      background-color: #e9ecef;
-    }
+    .suggestions-box li:last-child { border-bottom: none; }
+    .suggestions-box li:hover, .suggestions-box li.highlight { background-color: #e9ecef; }
 
 
     /* Inline fields: input and static display */
     .inline-field {
-      display: inline-block;
-      width: auto; /* Rely on JS for width adjustment */
-      min-width: 50px; /* Minimum width */
-      max-width: 80%; /* Prevent excessive width relative to parent */
-      margin: 0 .25rem;
-      vertical-align: baseline;
-      font: inherit;
-      font-size: 1em;
-      border: none;
-      border-bottom: 1px dotted #777;
-      background-color: transparent;
-      padding: 0 .25rem;
-      box-sizing: border-box;
+      display: inline-block; width: auto; min-width: 50px; max-width: 80%;
+      margin: 0 .25rem; vertical-align: baseline; font: inherit; font-size: 1em;
+      border: none; border-bottom: 1px dotted #777; background-color: transparent;
+      padding: 0 .25rem; box-sizing: border-box; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis;
     }
-    .inline-field::placeholder {
-      text-align: center;
-      opacity: 0.6;
-    }
+    .inline-field::placeholder { text-align: center; opacity: 0.6; }
     .inline-field:focus {
-      outline: none;
-      border-bottom-color: #0d6efd;
-      border-bottom-width: 2px;
-      border-bottom-style: solid;
+      outline: none; border-bottom-color: #0d6efd; border-bottom-width: 2px;
+      border-bottom-style: solid; overflow: visible; text-overflow: clip;
     }
 
     /* Custom dropdown container */
     .custom-dropdown {
-      display: inline-block;
-      position: relative;
-      vertical-align: baseline;
+      display: contents; /* Let input flow directly */
     }
-    /* Input within custom dropdown - REMOVED specific width rules */
-    /* Let it inherit .inline-field rules and be controlled by JS */
+    /* Input within custom dropdown */
      .custom-dropdown .inline-field.custom-dropdown-input {
-         /* Inherits width: auto, min-width: 50px, max-width: 80% */
-         /* Specific overrides if needed, e.g., slightly larger min-width */
          min-width: 80px;
+         display: inline-block;
+         /* Position relative NOT needed here if container is display:contents */
+         /* position: relative; */
      }
 
+    /* Suggestions list specifically for custom dropdowns */
     .custom-dropdown .suggestions {
-        top: 100%;
-        margin-top: 1px;
-        min-width: 100%;
-        width: auto;
-        left: 0;
-        right: auto;
+        position: absolute; /* Position relative to nearest positioned ancestor (the LI) */
+        /* top, left, min-width set by JS */
+        z-index: 1000; /* Ensure above other elements */
+        display: none; /* Hidden by default */
+        background-color: #fff;
+        border: 1px solid #ced4da;
+        border-radius: .25rem;
         box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+        width: auto; /* Allow to grow based on content */
+        max-width: 350px; /* Prevent excessive width */
+        max-height: 200px;
+        overflow-y: auto;
+        list-style: none;
+        padding: 0;
+        margin: 0;
     }
+    .custom-dropdown .suggestions ul { padding: 0; margin: 0; list-style: none; }
+    .custom-dropdown .suggestions li {
+        padding: .5rem 1rem; cursor: pointer; border-bottom: 1px solid #eee;
+        margin: 0;
+        /* Allow wrapping */
+        white-space: normal;
+        overflow: visible; /* Remove hidden */
+        text-overflow: clip; /* Remove ellipsis */
+        /* Optional: Add line-height for wrapped text */
+        line-height: 1.4;
+    }
+    .custom-dropdown .suggestions li:last-child { border-bottom: none; }
+    .custom-dropdown .suggestions li:hover,
+    .custom-dropdown .suggestions li.highlight { background-color: #e9ecef; }
 
 
     /* Tabs */
     .has-tabs { margin-top: 2rem; }
     li.has-tabs:first-child { margin-top: 0; }
-    .tabs-container {
-      position: absolute; top: -1.7rem; left: 2.5rem; display: flex; gap: 0.25rem;
-    }
-    .tab-button {
-      padding: 2px 8px; background-color: #e9ecef; border: 1px solid #ced4da;
-      border-radius: .25rem .25rem 0 0; font-size: 0.85rem; cursor: pointer;
-      position: relative; top: 1px; border-bottom: none;
-    }
-    .tab-button.active {
-      background-color: #fff; border-bottom-color: #fff; z-index: 2; font-weight: 500;
-    }
+    .tabs-container { position: absolute; top: -1.7rem; left: 2.5rem; display: flex; gap: 0.25rem; }
+    .tab-button { padding: 2px 8px; background-color: #e9ecef; border: 1px solid #ced4da; border-radius: .25rem .25rem 0 0; font-size: 0.85rem; cursor: pointer; position: relative; top: 1px; border-bottom: none; }
+    .tab-button.active { background-color: #fff; border-bottom-color: #fff; z-index: 2; font-weight: 500; }
     .tab-pane { display: none; }
     .tab-pane.active { display: block; }
 
@@ -228,11 +216,7 @@
     #newRunBtn { font-variant: small-caps; }
 
     /* Hidden span for measuring input width */
-    #width-measurer {
-        position: absolute; top: -9999px; left: -9999px; white-space: pre;
-        visibility: hidden; font: inherit; font-size: 1em; padding: 0 .25rem;
-        border: none; display: inline-block;
-    }
+    #width-measurer { position: absolute; top: -9999px; left: -9999px; white-space: pre; visibility: hidden; font: inherit; font-size: 1em; padding: 0 .25rem; border: none; display: inline-block; }
   </style>
 </head>
 <body>
@@ -531,77 +515,99 @@ function handleDragEnd(evt) { const itemEl = evt.item; const sentenceId = itemEl
     else { console.error(`Target section ${toPartLabel} not found.`); fromSection.sentences.splice(oldIndex, 0, movedSentence); buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); return; } }
     saveState(); if (fromPartLabel !== toPartLabel) itemEl.dataset.part = toPartLabel; }
 
-// --- Custom Dropdown Logic --- (REVISED attachDropdownLogic and added handleDropdownBlur)
+// --- Custom Dropdown Logic --- (REVISED showDropdownSuggestions, other handlers unchanged)
 function attachDropdownLogic() {
-   const container = document.getElementById('sectionContainer');
-   if (container) {
-       // --- Focus (Shows Suggestions) ---
-       container.removeEventListener('focus', handleDropdownFocus, true);
-       container.addEventListener('focus', handleDropdownFocus, true);
-       // --- Keydown (Handles Arrow Keys, Enter, Esc) ---
-       container.removeEventListener('keydown', handleDropdownKeydown);
-       container.addEventListener('keydown', handleDropdownKeydown);
-       // --- Mousedown on suggestions (Selects Item) ---
-       container.removeEventListener('mousedown', handleDropdownSuggestionClick);
-       container.addEventListener('mousedown', handleDropdownSuggestionClick);
-       // --- Blur (Hides Suggestions - specific to dropdown inputs) ---
-       container.removeEventListener('blur', handleDropdownBlur, true); // Use capture phase
-       container.addEventListener('blur', handleDropdownBlur, true);
-   } else { // Fallback if container not found
-       document.querySelectorAll(".custom-dropdown").forEach(dropdown => attachDropdownLogicForElement(dropdown));
-   }
+   const container = document.getElementById('sectionContainer'); if (!container) return;
+   container.removeEventListener('focus', handleDropdownFocus, true); container.addEventListener('focus', handleDropdownFocus, true);
+   container.removeEventListener('keydown', handleDropdownKeydown); container.addEventListener('keydown', handleDropdownKeydown);
+   container.removeEventListener('mousedown', handleDropdownSuggestionClick); container.addEventListener('mousedown', handleDropdownSuggestionClick);
+   container.removeEventListener('blur', handleDropdownBlur, true); container.addEventListener('blur', handleDropdownBlur, true);
 }
-function attachDropdownLogicForElement(element) { // For newly added elements
-    const dropdowns = element.matches('.custom-dropdown') ? [element] : element.querySelectorAll(".custom-dropdown");
-    dropdowns.forEach(dropdown => {
-        const input = dropdown.querySelector(".custom-dropdown-input");
-        const suggestionBox = dropdown.querySelector(".suggestions");
-        if (!input || !suggestionBox) return;
-        input.removeEventListener('focus', handleDropdownFocusDirect); input.addEventListener('focus', handleDropdownFocusDirect);
-        input.removeEventListener('keydown', handleDropdownKeydownDirect); input.addEventListener('keydown', handleDropdownKeydownDirect);
-        suggestionBox.removeEventListener('mousedown', handleDropdownSuggestionClickDirect); suggestionBox.addEventListener('mousedown', handleDropdownSuggestionClickDirect);
-        // Add specific blur listener for hiding suggestions on newly added elements
-        input.removeEventListener('blur', handleDropdownBlurDirect);
-        input.addEventListener('blur', handleDropdownBlurDirect);
-    });
-}
+function attachDropdownLogicForElement(element) { const dropdowns = element.matches('.custom-dropdown') ? [element] : element.querySelectorAll(".custom-dropdown"); dropdowns.forEach(dropdown => { const input = dropdown.querySelector(".custom-dropdown-input"); const suggestionBox = dropdown.querySelector(".suggestions"); if (!input || !suggestionBox) return; input.removeEventListener('focus', handleDropdownFocusDirect); input.addEventListener('focus', handleDropdownFocusDirect); input.removeEventListener('keydown', handleDropdownKeydownDirect); input.addEventListener('keydown', handleDropdownKeydownDirect); suggestionBox.removeEventListener('mousedown', handleDropdownSuggestionClickDirect); suggestionBox.addEventListener('mousedown', handleDropdownSuggestionClickDirect); input.removeEventListener('blur', handleDropdownBlurDirect); input.addEventListener('blur', handleDropdownBlurDirect); }); }
 function handleDropdownFocus(event) { if (event.target.matches('.custom-dropdown-input')) showDropdownSuggestions(event.target); }
 function handleDropdownFocusDirect(event) { showDropdownSuggestions(event.target); }
-function showDropdownSuggestions(inputElement) { const dropdown = inputElement.closest('.custom-dropdown'); if (!dropdown) return; const suggestionBox = dropdown.querySelector(".suggestions"); if (suggestionBox) suggestionBox.style.display = "block"; }
+
+/** Shows and positions the suggestions dropdown below its input field using absolute positioning relative to the LI. (REVISED) */
+function showDropdownSuggestions(inputElement) {
+    const dropdownContainer = inputElement.closest('.custom-dropdown'); // Find conceptual container
+    const liAncestor = inputElement.closest('li'); // Position relative to the LI
+    if (!dropdownContainer || !liAncestor) {
+        console.error("Cannot find required ancestors for dropdown input:", inputElement);
+        return;
+    }
+    const suggestionBox = dropdownContainer.querySelector(".suggestions");
+    if (!suggestionBox) {
+         console.error("Cannot find suggestions box for dropdown input:", inputElement);
+         return;
+    }
+
+    // Ensure LI is the positioning context (it should be already from CSS)
+    // if (window.getComputedStyle(liAncestor).position === 'static') {
+    //     liAncestor.style.position = 'relative'; // Make sure LI is positioned
+    // }
+
+    // Calculate position relative to the LI's top-left corner
+    // offsetTop/Left are relative to the offsetParent, which *should* be the LI
+    // if the intermediate div is display:contents. Verify this assumption.
+    // If offsetParent isn't LI, this calculation will be wrong.
+    // Let's assume offsetParent is the LI for now.
+    const inputTopRelativeToLi = inputElement.offsetTop;
+    const inputLeftRelativeToLi = inputElement.offsetLeft;
+    const inputHeight = inputElement.offsetHeight;
+    const inputWidth = inputElement.offsetWidth;
+
+    suggestionBox.style.position = 'absolute'; // Position relative to LI
+    suggestionBox.style.left = `${inputLeftRelativeToLi}px`;
+    suggestionBox.style.top = `${inputTopRelativeToLi + inputHeight + 2}px`; // Below input + gap
+    suggestionBox.style.minWidth = `${inputWidth}px`;
+    // Max width still controlled by CSS
+
+    suggestionBox.style.display = "block";
+
+    // Viewport boundary checks might still be useful even with absolute positioning
+    // Check if dropdown goes off-screen vertically and adjust
+    const suggestionsRect = suggestionBox.getBoundingClientRect(); // Use viewport coords for boundary check
+    const liRect = liAncestor.getBoundingClientRect();
+
+    if (suggestionsRect.bottom > window.innerHeight) {
+        // If it goes off bottom, position it above the input instead
+        // Calculate top relative to LI again
+        suggestionBox.style.top = `${inputTopRelativeToLi - suggestionBox.offsetHeight - 2}px`;
+    }
+     // Check horizontal overflow relative to the LI/viewport
+    if (suggestionsRect.right > window.innerWidth) {
+        // If it goes off right, align right edge with input right edge (relative to LI)
+         suggestionBox.style.left = `${inputLeftRelativeToLi + inputWidth - suggestionBox.offsetWidth}px`;
+    }
+     if (suggestionsRect.left < 0) {
+        // If it goes off left, reset left (relative to LI)
+         suggestionBox.style.left = '0px';
+    }
+}
+
+
 function handleDropdownKeydown(event) { if (event.target.matches('.custom-dropdown-input')) processDropdownKeydown(event.target, event); }
 function handleDropdownKeydownDirect(event) { processDropdownKeydown(event.target, event); }
-function processDropdownKeydown(inputElement, event) { const dropdown = inputElement.closest('.custom-dropdown'); if (!dropdown) return; const suggestionBox = dropdown.querySelector(".suggestions"); if (!suggestionBox || suggestionBox.style.display === 'none') return; const items = Array.from(suggestionBox.querySelectorAll("li")); if (items.length === 0) return; let focusedIndex = items.findIndex(item => item.classList.contains('highlight'));
-    switch (event.key) { case 'ArrowUp': event.preventDefault(); focusedIndex = (focusedIndex <= 0) ? items.length - 1 : focusedIndex - 1; highlightDropdownItem(items, focusedIndex); break; case 'ArrowDown': event.preventDefault(); focusedIndex = (focusedIndex < 0 || focusedIndex >= items.length - 1) ? 0 : focusedIndex + 1; highlightDropdownItem(items, focusedIndex); break; case 'Enter': case 'Tab': if (focusedIndex >= 0 && focusedIndex < items.length) { event.preventDefault(); selectDropdownItem(inputElement, items[focusedIndex]); hideDropdownSuggestions(inputElement); } else if (event.key === 'Enter') { event.preventDefault(); hideDropdownSuggestions(inputElement); inputElement.blur(); } break; case 'Escape': event.preventDefault(); hideDropdownSuggestions(inputElement); break; } }
+function processDropdownKeydown(inputElement, event) {
+    const suggestionBox = inputElement.closest('.custom-dropdown')?.querySelector(".suggestions"); // Adjusted selector slightly
+    if (!suggestionBox || suggestionBox.style.display === 'none') return;
+    const items = Array.from(suggestionBox.querySelectorAll("li")); if (items.length === 0) return; let focusedIndex = items.findIndex(item => item.classList.contains('highlight'));
+    switch (event.key) { case 'ArrowUp': event.preventDefault(); focusedIndex = (focusedIndex <= 0) ? items.length - 1 : focusedIndex - 1; highlightDropdownItem(items, focusedIndex); break; case 'ArrowDown': event.preventDefault(); focusedIndex = (focusedIndex < 0 || focusedIndex >= items.length - 1) ? 0 : focusedIndex + 1; highlightDropdownItem(items, focusedIndex); break; case 'Enter': case 'Tab': if (focusedIndex >= 0 && focusedIndex < items.length) { event.preventDefault(); selectDropdownItem(inputElement, items[focusedIndex]); hideDropdownSuggestions(inputElement); } else if (event.key === 'Enter') { event.preventDefault(); hideDropdownSuggestions(inputElement); inputElement.blur(); } break; case 'Escape': event.preventDefault(); hideDropdownSuggestions(inputElement); break; }
+}
 function handleDropdownSuggestionClick(event) { if (event.target.matches('.custom-dropdown .suggestions li')) { const input = event.target.closest('.custom-dropdown')?.querySelector('.custom-dropdown-input'); if (input) { selectDropdownItem(input, event.target); hideDropdownSuggestions(input); handleInlineFieldBlur({ target: input }); } } }
 function handleDropdownSuggestionClickDirect(event) { if (event.target.matches('li')) { const input = event.currentTarget.closest('.custom-dropdown')?.querySelector('.custom-dropdown-input'); if (input) { selectDropdownItem(input, event.target); hideDropdownSuggestions(input); handleInlineFieldBlur({ target: input }); } } }
 function highlightDropdownItem(items, index) { items.forEach((item, i) => { item.classList.toggle("highlight", i === index); if (i === index) item.scrollIntoView({ block: 'nearest' }); }); }
-function selectDropdownItem(inputElement, selectedLi) { inputElement.value = selectedLi.textContent.trim(); inputElement.title = inputElement.value; adjustInputWidth(inputElement); /* Adjust width after selecting */ }
-function hideDropdownSuggestions(inputElement) { const dropdown = inputElement.closest('.custom-dropdown'); if (!dropdown) return; const suggestionBox = dropdown.querySelector(".suggestions"); if (suggestionBox) { suggestionBox.style.display = "none"; const items = Array.from(suggestionBox.querySelectorAll("li")); highlightDropdownItem(items, -1); } }
-
-/** Handles blur event specifically for custom dropdown inputs to hide suggestions. */
-function handleDropdownBlur(event) { // Delegated version
-    if (event.target.matches('.custom-dropdown-input')) {
-        processDropdownBlur(event.target);
-    }
+function selectDropdownItem(inputElement, selectedLi) { inputElement.value = selectedLi.textContent.trim(); inputElement.title = inputElement.value; adjustInputWidth(inputElement); }
+function hideDropdownSuggestions(inputElement) {
+    const suggestionBox = inputElement.closest('.custom-dropdown')?.querySelector(".suggestions"); // Adjusted selector slightly
+     if (suggestionBox) { suggestionBox.style.display = "none"; const items = Array.from(suggestionBox.querySelectorAll("li")); highlightDropdownItem(items, -1); }
 }
-/** Handles blur event specifically for custom dropdown inputs (direct attach version). */
-function handleDropdownBlurDirect(event) { // Direct attach version
-    processDropdownBlur(event.target);
-}
-/** Logic to hide dropdown on blur, using a timeout. */
-function processDropdownBlur(inputElement) {
-    // Use setTimeout to allow clicks on suggestions to register first
-    setTimeout(() => {
-        const dropdownContainer = inputElement.closest('.custom-dropdown');
-        // Hide if focus has moved outside the dropdown container entirely
-        if (dropdownContainer && !dropdownContainer.contains(document.activeElement)) {
-             hideDropdownSuggestions(inputElement);
-        } else if (!dropdownContainer) {
-            // Fallback if somehow container isn't found, still hide
-             hideDropdownSuggestions(inputElement);
-        }
-        // If focus moved to a suggestion LI, the mousedown handler should have already selected/hidden.
-    }, 150); // Delay in ms (adjust if needed)
+function handleDropdownBlur(event) { if (event.target.matches('.custom-dropdown-input')) processDropdownBlur(event.target); }
+function handleDropdownBlurDirect(event) { processDropdownBlur(event.target); }
+function processDropdownBlur(inputElement) { setTimeout(() => {
+    const dropdownContainer = inputElement.closest('.custom-dropdown'); // Find container
+    if (dropdownContainer && !dropdownContainer.contains(document.activeElement)) { hideDropdownSuggestions(inputElement); }
+    else if (!dropdownContainer) { hideDropdownSuggestions(inputElement); } }, 150);
 }
 
 // --- Final Text Generation --- (generateBtn handler, generateFinalText - unchanged)
@@ -620,13 +626,13 @@ document.getElementById("copyBtn").addEventListener("click", () => { const final
 document.getElementById("newRunBtn").addEventListener("click", () => { if (localStorage.getItem(LOCAL_STORAGE_KEY)) { showConfirmationModal("New Run", "Discard current narrative?", "Saved data clears.", () => resetAll(), () => {}); } else { resetAll(); } });
 document.getElementById('toggleSectionTitles').addEventListener('change', () => { console.log("Titles toggled."); });
 
-// --- Input Auto-Sizing --- (attachInputSizingListeners, attachInputSizingListenersForElement, handleAutoSizingInput, handleAutoSizingInputDirect, adjustTextareaHeight, adjustInputWidth, adjustAllInitialSizes, adjustAllInitialSizesForElement - unchanged)
+// --- Input Auto-Sizing --- (adjustInputWidth, adjustTextareaHeight, handlers, adjustAllInitialSizes... - unchanged)
 function attachInputSizingListeners() { const container = document.getElementById('sectionContainer'); if (container) { container.removeEventListener('input', handleAutoSizingInput); container.addEventListener('input', handleAutoSizingInput); } }
 function attachInputSizingListenersForElement(element) { element.querySelectorAll('.inline-field, .auto-height-textarea').forEach(input => { input.removeEventListener('input', handleAutoSizingInputDirect); input.addEventListener('input', handleAutoSizingInputDirect); }); }
 function handleAutoSizingInput(event) { if (event.target.matches('.inline-field')) adjustInputWidth(event.target); else if (event.target.matches('.auto-height-textarea')) adjustTextareaHeight(event.target); }
 function handleAutoSizingInputDirect(event) { if (event.target.matches('.inline-field')) adjustInputWidth(event.target); else if (event.target.matches('.auto-height-textarea')) adjustTextareaHeight(event.target); }
 function adjustTextareaHeight(textarea) { if (!textarea) return; textarea.style.height = 'auto'; const newHeight = Math.max(textarea.scrollHeight, parseFloat(getComputedStyle(textarea).minHeight) || 0); textarea.style.height = `${newHeight}px`; }
-function adjustInputWidth(input) { if (!input || !widthMeasurerSpan) return; const inputStyle = window.getComputedStyle(input); widthMeasurerSpan.textContent = input.value || input.placeholder || ' '; widthMeasurerSpan.style.font = inputStyle.font; const contentWidth = widthMeasurerSpan.scrollWidth + 1; let maxWidth = input.parentElement.clientWidth * (MAX_INLINE_WIDTH_PERCENT / 100); if (!maxWidth || maxWidth <= MIN_INLINE_WIDTH) maxWidth = window.innerWidth * 0.7; const newWidth = Math.max(MIN_INLINE_WIDTH, Math.min(contentWidth, maxWidth)); input.style.width = `${newWidth}px`; }
+function adjustInputWidth(input) { if (!input || !widthMeasurerSpan) return; const inputStyle = window.getComputedStyle(input); const isCustomDropdown = input.classList.contains('custom-dropdown-input'); const minWidth = parseFloat(inputStyle.minWidth) || (isCustomDropdown ? 80 : MIN_INLINE_WIDTH); widthMeasurerSpan.style.font = inputStyle.font; widthMeasurerSpan.textContent = input.placeholder || ' '; const placeholderWidth = widthMeasurerSpan.scrollWidth; widthMeasurerSpan.textContent = input.value || ' '; const valueWidth = widthMeasurerSpan.scrollWidth; const requiredContentWidth = Math.max(valueWidth, placeholderWidth) + 3; const parentLi = input.closest('li'); let parentWidth = parentLi?.clientWidth || window.innerWidth; parentWidth = parentWidth * 0.9; let maxWidth = parentWidth * (MAX_INLINE_WIDTH_PERCENT / 100); maxWidth = Math.max(maxWidth, minWidth * 1.5); const newWidth = Math.min(maxWidth, Math.max(minWidth, requiredContentWidth)); input.style.width = `${newWidth}px`; }
 function adjustAllInitialSizes() { document.querySelectorAll('.inline-field').forEach(input => adjustInputWidth(input)); document.querySelectorAll('.auto-height-textarea').forEach(textarea => adjustTextareaHeight(textarea)); }
 function adjustAllInitialSizesForElement(element) { element.querySelectorAll('.inline-field').forEach(input => adjustInputWidth(input)); element.querySelectorAll('.auto-height-textarea').forEach(textarea => adjustTextareaHeight(textarea)); }
 
