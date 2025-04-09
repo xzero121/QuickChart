@@ -63,7 +63,7 @@
           "text": "The response was [customDropdown:Response Type]."
         },
         {
-          "text": "Upon arrival, the patient’s condition was [text:Initial Condition:stable,stable and within normal limits]."
+          "text": "Upon arrival, the patient’s condition was [customDropdown:Initial Condition:stable,stable and within normal limits]."
         },
         {
           "tabs": [
@@ -87,7 +87,7 @@
           "tabs": [
             {
               "title": "Complaint",
-              "text": "The patient’s chief complaint is [text:Chief Complaint], which has been ongoing for [text:Duration] [customDropdown:Duration Units:minutes, gours, days, weeks, months, years]."
+              "text": "The patient’s chief complaint is [text:Chief Complaint], which has been ongoing for [text:Duration] [customDropdown:Duration Units:minutes, hours, days, weeks, months, years]."
             },
             {
               "title": "No Complaint",
@@ -171,7 +171,7 @@
           "text": "The patient was transported to [customDropdown:Receiving Facility]."
         },
         {
-          "text": "Upon arrival, the patient’s condition was [text:Arrival Condition:stable,stable and within normal limits]."
+          "text": "Upon arrival, the patient’s condition was [customDropdown:Arrival Condition:stable,stable and within normal limits]."
         },
         {
           "tabs": [
