@@ -40,12 +40,45 @@
     "Patient Condition": ["improved", "did not change", "worsened"],
     "Transfer of Location": ["hospital bed", "facility bed"],
     "Sending Facility": ["Baptist Floyd", "Baptist Freestanding ER in Jeffersonville"],
-    "Receiving Facility": ["Baptist Floyd", "Baptist Health Louisville"],
+    "Receiving Facility": [
+      "Baptist Floyd", 
+      "Baptist Health Louisville",
+      "*Autmnn Woods",
+      "*Bennett Place",
+      "*Charlestown Place",
+      "*Clark Memorial Hospital",
+      "*Corydon Nursing and Rehab",
+      "*Green Valley Care Center",
+      "*Hampton Oaks",
+      "*Harrison Health & Rehab",
+      "*Harrison Springs",
+      "*Hillcrest",
+      "*Indian Creek",
+      "*Lake Pointe Village",
+      "*Lincoln Hills Health Center",
+      "*Meadow View",
+      "*PAM North",
+      "*PAM South",
+      "*River Crossing",
+      "*Riverview Village",
+      "*Rolling Hills",
+      "*St. Vincent Salem",
+      "*Salem Crossing",
+      "*Sellersburg Health and Rehab",
+      "*Silvercrest",
+      "*Todd-Dickey",
+      "*Vivera Senior Loving of Jeffersonville",
+      "*Wedgewood Healthcare Center",
+      "*Westminster Village",
+      "*Waters of Clifty Falls",
+      "*Waters of Georgetown (Guerin Woods)",
+      "*Waters of Scottsburg"      
+    ],
     "Reason": ["higher level of care", "long term care"],
     "Medical Necessity": [
       "1: Patient was bed confined before and after transport",
       "2: Patient required Cardiac / Hemodynamic monitoring during transport",
-      "3: Patient is confused, combatative, lethargic, or comatose",
+      "3: Patient is confused, combative, lethargic, or comatose",
       "4: Patient has contractures",
       "5: Patient is a danger to self or others - requires monitoring",
       "6: Patient has DVT required elevation of lower extremity",
@@ -105,7 +138,7 @@
             },
             {
               "title": "No Complaint",
-              "text": "The patient had no stated complaint at the time of EMS transport. [text:Additional Info]."
+              "text": "The patient had no stated complaint at the time of EMS transport."
             }
           ]
         }
