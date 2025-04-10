@@ -67,7 +67,7 @@
 
 
     /* Sections */
-    .dchart-section {
+    .narrative-section {
       background-color: #f8f9fa;
       padding: 1rem;
       border-radius: .25rem;
@@ -483,7 +483,8 @@
      * QuickChart Application Script
      * Handles dynamic sentence building, reordering, state management,
      * and final narrative generation for EMS charting.
-     * Includes auto-sizing inputs, improved dropdown behavior, and JSON config loading.
+     * Includes auto-sizing inputs, improved dropdown behavior with filtering,
+     * support for hidden dropdown items, and JSON config loading.
      */
 
     // --- Constants ---
@@ -492,11 +493,12 @@
     const MIN_INLINE_WIDTH = 50; // Min width for inline fields (px)
     const MAX_INLINE_WIDTH_PERCENT = 80; // Max width relative to parent (%)
     const DEFAULT_CONFIG_NAME = 'default'; // Default config file name
+    const HIDDEN_ITEM_MARKER = '*'; // Prefix for dropdown options hidden by default
 
     // --- Global State ---
     let rawCommonSentences = []; let commonSentences = [];
-    let globalDropdownOptions = {}; let defaultDchartSections = []; // Holds the *defaults* from the loaded JSON
-    let dchartSections = []; // Holds the *current working state* (potentially modified by user)
+    let globalDropdownOptions = {}; let defaultNarrativeSections = []; // Holds the *defaults* from the loaded JSON
+    let narrativeSections = []; // Holds the *current working state* (potentially modified by user)
     let fuse; let sentenceIdCounter = 1;
     let widthMeasurerSpan; // Ref to hidden span for width calc
     let currentConfigName = DEFAULT_CONFIG_NAME; // Track currently loaded config
@@ -526,7 +528,7 @@
         buildSectionsUI();
         attachInputSizingListeners();
         attachBlurListeners();
-        attachDropdownLogic();
+        attachDropdownLogic(); // Includes new input listener attachment
         adjustAllInitialSizes();
 
         console.log("QuickChart Initialized Successfully.");
@@ -611,7 +613,7 @@
         rawCommonSentences = data.commonSentences || [];
         globalDropdownOptions = data.globalDropdownOptions || {};
         // Store the loaded sections as the *new* defaults
-        defaultDchartSections = data.dchartSections || [];
+        defaultNarrativeSections = data.narrativeSections || [];
 
         // --- Update Fuse Search Data ---
         commonSentences = rawCommonSentences.map((s) => ({
@@ -643,15 +645,15 @@
 
     // --- State Management ---
 
-    /** Loads the working state (dchartSections) from localStorage */
+    /** Loads the working state (narrativeSections) from localStorage */
     function loadState() {
       const savedState = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (savedState) {
         try {
           // Load saved sections into the working state
-          dchartSections = JSON.parse(savedState);
+          narrativeSections = JSON.parse(savedState);
           // Ensure data integrity (assign IDs, initialize values) based on loaded state
-          assignInitialIDs(dchartSections);
+          assignInitialIDs(narrativeSections);
           console.log("Working state loaded from localStorage.");
         } catch (e) {
           console.error("Failed parse saved state, using defaults from loaded config.", e);
@@ -665,25 +667,25 @@
         resetToCurrentConfigDefaults(false); // Don't rebuild UI yet
       }
       // Ensure counter is ahead of any loaded IDs
-      sentenceIdCounter = findHighestSentenceId(dchartSections) + 1;
+      sentenceIdCounter = findHighestSentenceId(narrativeSections) + 1;
     }
 
-    /** Saves the current working state (dchartSections) to localStorage */
+    /** Saves the current working state (narrativeSections) to localStorage */
     function saveState() {
       try {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(dchartSections));
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(narrativeSections));
       } catch (e) {
         console.error("Failed save state.", e);
         showConfirmationModal("Save Error", "Could not save changes to browser storage. Storage might be full.", "", () => { }, () => { }, true);
       }
     }
 
-    /** Resets the working state (dchartSections) to the defaults of the currently loaded config */
+    /** Resets the working state (narrativeSections) to the defaults of the currently loaded config */
     function resetToCurrentConfigDefaults(rebuildUI = true) {
       console.log(`Resetting to defaults for config: ${currentConfigName}`);
       // Deep clone the defaults from the *currently loaded* configuration
-      dchartSections = JSON.parse(JSON.stringify(defaultDchartSections));
-      assignInitialIDs(dchartSections); // Assign fresh IDs and initialize values
+      narrativeSections = JSON.parse(JSON.stringify(defaultNarrativeSections));
+      assignInitialIDs(narrativeSections); // Assign fresh IDs and initialize values
       localStorage.removeItem(LOCAL_STORAGE_KEY); // Clear any previous saved state for this session
       if (rebuildUI) {
         buildSectionsUI(); // Rebuild UI with defaults
@@ -730,12 +732,12 @@
     // --- UI Building Functions --- (buildSectionsUI, createSectionElement, createSentenceElement, createTabsContainer, createTabPaneElement, createRemoveButton, createAddSentenceForm - unchanged)
     function buildSectionsUI() {
       const container = document.getElementById("sectionContainer"); if (!container) { console.error("Section container not found!"); return; }
-      container.innerHTML = ""; dchartSections.forEach(secObj => container.appendChild(createSectionElement(secObj)));
+      container.innerHTML = ""; narrativeSections.forEach(secObj => container.appendChild(createSectionElement(secObj)));
       makeSentencesDraggable();
       // Listeners attached separately
     }
     function createSectionElement(secObj) {
-      const sectionDiv = document.createElement("div"); sectionDiv.classList.add("dchart-section"); sectionDiv.dataset.part = secObj.part;
+      const sectionDiv = document.createElement("div"); sectionDiv.classList.add("narrative-section"); sectionDiv.dataset.part = secObj.part;
       const header = document.createElement("div"); header.classList.add("section-header"); const titleEl = document.createElement("h5");
       titleEl.classList.add("section-title", "m-0"); titleEl.innerText = secObj.part; header.appendChild(titleEl); sectionDiv.appendChild(header);
       const ul = document.createElement("ul"); ul.classList.add("sentence-list"); ul.dataset.part = secObj.part;
@@ -795,7 +797,7 @@
       }); suggestionsBoxElement.style.display = "block";
     }
     function addSentence(partLabel, sentenceData) {
-      const section = dchartSections.find(s => s.part === partLabel); if (!section) return;
+      const section = narrativeSections.find(s => s.part === partLabel); if (!section) return;
       sentenceData.id = "sentence-" + sentenceIdCounter++; initializeSentenceValues(sentenceData); if (!section.sentences) section.sentences = []; section.sentences.push(sentenceData);
       console.log(`Sentence added: ${sentenceData.id}`); const ul = document.querySelector(`.sentence-list[data-part="${partLabel}"]`);
       if (ul) {
@@ -806,7 +808,7 @@
       saveState();
     }
     function removeSentence(partLabel, sentenceId) {
-      const section = dchartSections.find(s => s.part === partLabel); if (!section || !section.sentences) return;
+      const section = narrativeSections.find(s => s.part === partLabel); if (!section || !section.sentences) return;
       const index = section.sentences.findIndex(s => s.id === sentenceId);
       if (index > -1) {
         section.sentences.splice(index, 1); console.log(`Sentence removed data: ${sentenceId}`); const li = document.querySelector(`li[data-id="${sentenceId}"]`);
@@ -847,7 +849,7 @@
       if (valueChanged) saveState();
     }
     function storeAllInlineValues() {
-      let changesMade = false; dchartSections.forEach(section => {
+      let changesMade = false; narrativeSections.forEach(section => {
         if (!section.sentences) return; section.sentences.forEach(sentenceObj => {
           const li = document.querySelector(`li[data-id="${sentenceObj.id}"]`); if (!li) return; initializeSentenceValues(sentenceObj);
           if (sentenceObj.tabs && Array.isArray(sentenceObj.tabs)) {
@@ -860,137 +862,272 @@
       }); return changesMade;
     }
 
-    // --- HTML Building for Inline Fields --- (buildInlineFields - unchanged)
+    // --- HTML Building for Inline Fields --- (MODIFIED buildInlineFields)
     function buildInlineFields(textTemplate, valuesObject) {
       if (!valuesObject) valuesObject = {}; const cleanText = (textTemplate || "").replace(/<br\s*\/?>/gi, "");
       return cleanText.replace(placeholderRegex, (match, type, label, options) => {
         const currentValue = valuesObject[label] || ""; let dropdownOptionsArray = [];
         if (options) dropdownOptionsArray = options.split(",").map(x => x.trim()); else if (globalDropdownOptions[label]) dropdownOptionsArray = globalDropdownOptions[label];
         switch (type) {
-          case "customDropdown": const listItems = dropdownOptionsArray.map(opt => `<li class="list-group-item" title="${opt}">${opt}</li>`).join(""); return `
-          <div class="custom-dropdown"><input type="text" class="inline-field custom-dropdown-input" data-type="customDropdown" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}" autocomplete="off"/><ul class="suggestions">${listItems}</ul></div>`;
+          case "customDropdown":
+            const listItems = dropdownOptionsArray.map(opt => {
+              const isHidden = opt.startsWith(HIDDEN_ITEM_MARKER);
+              const displayOpt = isHidden ? opt.substring(HIDDEN_ITEM_MARKER.length) : opt;
+              // Add data-hidden attribute if it starts with the marker
+              const hiddenAttr = isHidden ? ' data-hidden="true"' : '';
+              return `<li class="list-group-item"${hiddenAttr} title="${displayOpt}">${displayOpt}</li>`;
+            }).join("");
+            return `
+            <div class="custom-dropdown">
+              <input type="text" class="inline-field custom-dropdown-input" data-type="customDropdown" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}" autocomplete="off"/>
+              <ul class="suggestions">${listItems}</ul>
+            </div>`;
           case "text": return `<input type="text" class="inline-field" data-type="text" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}"/>`;
           case "number": return `<input type="number" class="inline-field" data-type="number" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}"/>`;
-          case "dropdown": return `<input type="text" class="inline-field" data-type="dropdown" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}"/>`;
+          case "dropdown": return `<input type="text" class="inline-field" data-type="dropdown" data-label="${label}" placeholder="${label}" value="${currentValue}" title="${currentValue || label}"/>`; // Standard dropdown might need similar logic if used
           default: console.warn(`Unknown type: ${type}`); return match;
         }
       });
     }
 
     // --- Drag and Drop --- (makeSentencesDraggable, handleDragEnd - unchanged)
-    function makeSentencesDraggable() { const lists = document.querySelectorAll(".sentence-list"); lists.forEach(ul => { const existingSortable = Sortable.get(ul); if (existingSortable) existingSortable.destroy(); new Sortable(ul, { animation: 150, group: { name: "dchartGroup", pull: true, put: true }, handle: ".drag-handle", ghostClass: "sortable-ghost", chosenClass: "sortable-chosen", dragClass: "sortable-drag", onEnd: handleDragEnd, }); }); }
+    function makeSentencesDraggable() { const lists = document.querySelectorAll(".sentence-list"); lists.forEach(ul => { const existingSortable = Sortable.get(ul); if (existingSortable) existingSortable.destroy(); new Sortable(ul, { animation: 150, group: { name: "narrativeGroup", pull: true, put: true }, handle: ".drag-handle", ghostClass: "sortable-ghost", chosenClass: "sortable-chosen", dragClass: "sortable-drag", onEnd: handleDragEnd, }); }); }
     function handleDragEnd(evt) {
-      const itemEl = evt.item; const sentenceId = itemEl.dataset.id; const toList = evt.to; const fromList = evt.from; const oldIndex = evt.oldDraggableIndex; const newIndex = evt.newDraggableIndex; const toPartLabel = toList.dataset.part; const fromPartLabel = fromList.dataset.part; console.log(`Sentence ${sentenceId} moved ${fromPartLabel}[${oldIndex}]->${toPartLabel}[${newIndex}]`); let movedSentence; const fromSection = dchartSections.find(s => s.part === fromPartLabel);
+      const itemEl = evt.item; const sentenceId = itemEl.dataset.id; const toList = evt.to; const fromList = evt.from; const oldIndex = evt.oldDraggableIndex; const newIndex = evt.newDraggableIndex; const toPartLabel = toList.dataset.part; const fromPartLabel = fromList.dataset.part; console.log(`Sentence ${sentenceId} moved ${fromPartLabel}[${oldIndex}]->${toPartLabel}[${newIndex}]`); let movedSentence; const fromSection = narrativeSections.find(s => s.part === fromPartLabel);
       if (fromSection?.sentences && oldIndex < fromSection.sentences.length) { movedSentence = fromSection.sentences.splice(oldIndex, 1)[0]; if (!movedSentence || movedSentence.id !== sentenceId) { console.error("Mismatch remove drag!"); buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); return; } }
       else { console.error(`Cannot find source ${fromPartLabel} or sentence at ${oldIndex}`); buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); return; }
       if (movedSentence) {
-        const toSection = dchartSections.find(s => s.part === toPartLabel); if (toSection) { if (!toSection.sentences) toSection.sentences = []; toSection.sentences.splice(newIndex, 0, movedSentence); }
+        const toSection = narrativeSections.find(s => s.part === toPartLabel); if (toSection) { if (!toSection.sentences) toSection.sentences = []; toSection.sentences.splice(newIndex, 0, movedSentence); }
         else { console.error(`Target section ${toPartLabel} not found.`); fromSection.sentences.splice(oldIndex, 0, movedSentence); buildSectionsUI(); attachInputSizingListeners(); attachBlurListeners(); attachDropdownLogic(); adjustAllInitialSizes(); return; }
       }
       saveState(); if (fromPartLabel !== toPartLabel) itemEl.dataset.part = toPartLabel;
     }
 
-    // --- Custom Dropdown Logic --- (REVISED showDropdownSuggestions, other handlers unchanged)
+    // --- Custom Dropdown Logic --- (MODIFIED: Added filtering, hidden item handling)
     function attachDropdownLogic() {
       const container = document.getElementById('sectionContainer'); if (!container) return;
+      // Event delegation for efficiency
       container.removeEventListener('focus', handleDropdownFocus, true); container.addEventListener('focus', handleDropdownFocus, true);
+      container.removeEventListener('input', handleDropdownInput, true); container.addEventListener('input', handleDropdownInput, true); // ADDED for filtering
       container.removeEventListener('keydown', handleDropdownKeydown); container.addEventListener('keydown', handleDropdownKeydown);
       container.removeEventListener('mousedown', handleDropdownSuggestionClick); container.addEventListener('mousedown', handleDropdownSuggestionClick);
       container.removeEventListener('blur', handleDropdownBlur, true); container.addEventListener('blur', handleDropdownBlur, true);
     }
-    function attachDropdownLogicForElement(element) { const dropdowns = element.matches('.custom-dropdown') ? [element] : element.querySelectorAll(".custom-dropdown"); dropdowns.forEach(dropdown => { const input = dropdown.querySelector(".custom-dropdown-input"); const suggestionBox = dropdown.querySelector(".suggestions"); if (!input || !suggestionBox) return; input.removeEventListener('focus', handleDropdownFocusDirect); input.addEventListener('focus', handleDropdownFocusDirect); input.removeEventListener('keydown', handleDropdownKeydownDirect); input.addEventListener('keydown', handleDropdownKeydownDirect); suggestionBox.removeEventListener('mousedown', handleDropdownSuggestionClickDirect); suggestionBox.addEventListener('mousedown', handleDropdownSuggestionClickDirect); input.removeEventListener('blur', handleDropdownBlurDirect); input.addEventListener('blur', handleDropdownBlurDirect); }); }
-    function handleDropdownFocus(event) { if (event.target.matches('.custom-dropdown-input')) showDropdownSuggestions(event.target); }
-    function handleDropdownFocusDirect(event) { showDropdownSuggestions(event.target); }
-
-    /** Shows and positions the suggestions dropdown below its input field using absolute positioning relative to the LI. (REVISED) */
-    function showDropdownSuggestions(inputElement) {
-      const dropdownContainer = inputElement.closest('.custom-dropdown'); // Find conceptual container
-      const liAncestor = inputElement.closest('li'); // Position relative to the LI
-      if (!dropdownContainer || !liAncestor) {
-        console.error("Cannot find required ancestors for dropdown input:", inputElement);
-        return;
-      }
-      // Find the suggestions UL element - assuming it's a sibling or predictable child of the input's parent
-      // Since custom-dropdown is display:contents, input's parent might be the contentDiv.
-      // Let's assume suggestions is a sibling of the input within the conceptual custom-dropdown structure
-      const suggestionBox = inputElement.nextElementSibling; // Try finding as immediate sibling first
-      if (!suggestionBox || !suggestionBox.classList.contains('suggestions')) {
-        // Fallback: query within the LI (less ideal if multiple dropdowns in one LI)
-        const suggestionsInLi = liAncestor.querySelectorAll('.suggestions');
-        // Need a way to reliably associate input with its specific suggestions UL
-        // TODO: Improve this association if needed (e.g., data attributes)
-        console.warn("Cannot reliably find suggestions box for input:", inputElement);
-        // For now, try finding the first one in the LI as a guess
-        suggestionBox = liAncestor.querySelector('.suggestions');
-        if (!suggestionBox) return;
-      }
-
-
-      // Calculate position relative to the LI's top-left corner
-      const inputTopRelativeToLi = inputElement.offsetTop;
-      const inputLeftRelativeToLi = inputElement.offsetLeft;
-      const inputHeight = inputElement.offsetHeight;
-      const inputWidth = inputElement.offsetWidth;
-
-      suggestionBox.style.position = 'absolute'; // Position relative to LI (which has position:relative)
-      suggestionBox.style.left = `${inputLeftRelativeToLi}px`;
-      suggestionBox.style.top = `${inputTopRelativeToLi + inputHeight + 2}px`; // Below input + gap
-      suggestionBox.style.minWidth = `${inputWidth}px`;
-      // Max width still controlled by CSS
-
-      suggestionBox.style.display = "block";
-
-      // Viewport boundary checks might still be useful
-      const suggestionsRect = suggestionBox.getBoundingClientRect();
-      if (suggestionsRect.bottom > window.innerHeight) {
-        suggestionBox.style.top = `${inputTopRelativeToLi - suggestionBox.offsetHeight - 2}px`;
-      }
-      if (suggestionsRect.right > window.innerWidth) {
-        suggestionBox.style.left = `${inputLeftRelativeToLi + inputWidth - suggestionBox.offsetWidth}px`;
-      }
-      if (suggestionsRect.left < 0) {
-        suggestionBox.style.left = '0px';
-      }
+    function attachDropdownLogicForElement(element) { // Attach listeners to newly added elements
+      const dropdowns = element.matches('.custom-dropdown-input') ? [element.closest('.custom-dropdown')] : element.querySelectorAll(".custom-dropdown");
+      dropdowns.forEach(dropdown => {
+        const input = dropdown.querySelector(".custom-dropdown-input");
+        const suggestionBox = dropdown.querySelector(".suggestions");
+        if (!input || !suggestionBox) return;
+        input.removeEventListener('focus', handleDropdownFocusDirect); input.addEventListener('focus', handleDropdownFocusDirect);
+        input.removeEventListener('input', handleDropdownInputDirect); input.addEventListener('input', handleDropdownInputDirect); // ADDED for filtering
+        input.removeEventListener('keydown', handleDropdownKeydownDirect); input.addEventListener('keydown', handleDropdownKeydownDirect);
+        suggestionBox.removeEventListener('mousedown', handleDropdownSuggestionClickDirect); suggestionBox.addEventListener('mousedown', handleDropdownSuggestionClickDirect);
+        input.removeEventListener('blur', handleDropdownBlurDirect); input.addEventListener('blur', handleDropdownBlurDirect);
+      });
     }
 
+    // --- Handlers for Dropdown ---
+    function handleDropdownFocus(event) { if (event.target.matches('.custom-dropdown-input')) filterAndShowDropdownSuggestions(event.target); }
+    function handleDropdownFocusDirect(event) { filterAndShowDropdownSuggestions(event.target); }
+
+    function handleDropdownInput(event) { if (event.target.matches('.custom-dropdown-input')) filterAndShowDropdownSuggestions(event.target); }
+    function handleDropdownInputDirect(event) { filterAndShowDropdownSuggestions(event.target); }
 
     function handleDropdownKeydown(event) { if (event.target.matches('.custom-dropdown-input')) processDropdownKeydown(event.target, event); }
     function handleDropdownKeydownDirect(event) { processDropdownKeydown(event.target, event); }
-    function processDropdownKeydown(inputElement, event) {
-      const suggestionBox = inputElement.closest('.custom-dropdown')?.querySelector(".suggestions"); // Adjusted selector slightly
-      if (!suggestionBox || suggestionBox.style.display === 'none') return;
-      const items = Array.from(suggestionBox.querySelectorAll("li")); if (items.length === 0) return; let focusedIndex = items.findIndex(item => item.classList.contains('highlight'));
-      switch (event.key) { case 'ArrowUp': event.preventDefault(); focusedIndex = (focusedIndex <= 0) ? items.length - 1 : focusedIndex - 1; highlightDropdownItem(items, focusedIndex); break; case 'ArrowDown': event.preventDefault(); focusedIndex = (focusedIndex < 0 || focusedIndex >= items.length - 1) ? 0 : focusedIndex + 1; highlightDropdownItem(items, focusedIndex); break; case 'Enter': case 'Tab': if (focusedIndex >= 0 && focusedIndex < items.length) { event.preventDefault(); selectDropdownItem(inputElement, items[focusedIndex]); hideDropdownSuggestions(inputElement); } else if (event.key === 'Enter') { event.preventDefault(); hideDropdownSuggestions(inputElement); inputElement.blur(); } break; case 'Escape': event.preventDefault(); hideDropdownSuggestions(inputElement); break; }
-    }
+
     function handleDropdownSuggestionClick(event) { if (event.target.matches('.custom-dropdown .suggestions li')) { const input = event.target.closest('.custom-dropdown')?.querySelector('.custom-dropdown-input'); if (input) { selectDropdownItem(input, event.target); hideDropdownSuggestions(input); handleInlineFieldBlur({ target: input }); } } }
     function handleDropdownSuggestionClickDirect(event) { if (event.target.matches('li')) { const input = event.currentTarget.closest('.custom-dropdown')?.querySelector('.custom-dropdown-input'); if (input) { selectDropdownItem(input, event.target); hideDropdownSuggestions(input); handleInlineFieldBlur({ target: input }); } } }
-    function highlightDropdownItem(items, index) { items.forEach((item, i) => { item.classList.toggle("highlight", i === index); if (i === index) item.scrollIntoView({ block: 'nearest' }); }); }
-    function selectDropdownItem(inputElement, selectedLi) { inputElement.value = selectedLi.textContent.trim(); inputElement.title = inputElement.value; adjustInputWidth(inputElement); }
-    function hideDropdownSuggestions(inputElement) {
-      const suggestionBox = inputElement.closest('.custom-dropdown')?.querySelector(".suggestions"); // Adjusted selector slightly
-      if (suggestionBox) { suggestionBox.style.display = "none"; const items = Array.from(suggestionBox.querySelectorAll("li")); highlightDropdownItem(items, -1); }
-    }
+
     function handleDropdownBlur(event) { if (event.target.matches('.custom-dropdown-input')) processDropdownBlur(event.target); }
     function handleDropdownBlurDirect(event) { processDropdownBlur(event.target); }
+
+
+    /** Filters suggestions based on input, handles hidden items, positions and shows dropdown. (NEW/REVISED) */
+    function filterAndShowDropdownSuggestions(inputElement) {
+      const dropdownContainer = inputElement.closest('.custom-dropdown');
+      const suggestionBox = dropdownContainer?.querySelector(".suggestions");
+      const liAncestor = inputElement.closest('li'); // Position relative to the LI
+      if (!suggestionBox || !liAncestor) {
+          console.error("Cannot find suggestions box or list item for input:", inputElement);
+          return;
+      }
+
+      const filterText = inputElement.value.toLowerCase().trim();
+      const items = Array.from(suggestionBox.querySelectorAll("li"));
+      let hasVisibleItems = false;
+
+      items.forEach(item => {
+        const itemText = item.textContent.toLowerCase();
+        const isHiddenByDefault = item.dataset.hidden === 'true';
+
+        // Determine visibility based on filter text
+        let shouldShow = true;
+        if (filterText) {
+            // If filtering, show if text matches (hidden status doesn't matter)
+            shouldShow = itemText.includes(filterText);
+        } else {
+            // If not filtering (just focused), hide items marked as hidden
+            shouldShow = !isHiddenByDefault;
+        }
+
+        item.style.display = shouldShow ? "" : "none";
+        if (shouldShow) {
+          hasVisibleItems = true;
+        }
+      });
+
+      // Only show the box if there are items to display
+      if (hasVisibleItems) {
+        positionDropdownSuggestions(inputElement, suggestionBox, liAncestor);
+        suggestionBox.style.display = "block";
+        highlightDropdownItem(items.filter(li => li.style.display !== 'none'), -1); // Reset highlight on filter/show
+      } else {
+        suggestionBox.style.display = "none";
+      }
+    }
+
+    /** Positions the suggestions dropdown below its input field. (Extracted Logic) */
+    function positionDropdownSuggestions(inputElement, suggestionBox, liAncestor) {
+        // Calculate position relative to the LI's top-left corner
+        const inputTopRelativeToLi = inputElement.offsetTop;
+        const inputLeftRelativeToLi = inputElement.offsetLeft;
+        const inputHeight = inputElement.offsetHeight;
+        const inputWidth = inputElement.offsetWidth;
+
+        suggestionBox.style.position = 'absolute'; // Position relative to LI (which has position:relative)
+        suggestionBox.style.left = `${inputLeftRelativeToLi}px`;
+        suggestionBox.style.top = `${inputTopRelativeToLi + inputHeight + 2}px`; // Below input + gap
+        suggestionBox.style.minWidth = `${inputWidth}px`;
+
+        // Basic viewport boundary checks (can be enhanced)
+        // Defer calculation until after display:block ensures dimensions are accurate
+        requestAnimationFrame(() => {
+            const suggestionsRect = suggestionBox.getBoundingClientRect();
+            const liRect = liAncestor.getBoundingClientRect(); // Use LI for viewport context
+
+            // Adjust vertical position if overflows bottom
+            if (suggestionsRect.bottom > window.innerHeight) {
+              const spaceAbove = inputElement.getBoundingClientRect().top - liRect.top; // Space above input within LI
+              if (suggestionBox.offsetHeight < spaceAbove) { // Only flip if fits above
+                 suggestionBox.style.top = `${inputTopRelativeToLi - suggestionBox.offsetHeight - 2}px`;
+              }
+            }
+
+             // Adjust horizontal position if overflows right
+            if (suggestionsRect.right > window.innerWidth) {
+                 const newLeft = window.innerWidth - suggestionsRect.width - 5; // 5px padding from edge
+                 suggestionBox.style.left = `${Math.max(0, newLeft - liRect.left)}px`; // Relative to LI
+            }
+
+            // Prevent overflowing left edge
+            if (suggestionsRect.left < 0) {
+                 suggestionBox.style.left = `${-liRect.left + 5}px`; // Relative to LI, 5px padding
+            }
+        });
+    }
+
+    /** Processes keydown events within the dropdown input (filtering handled by 'input' event). */
+    function processDropdownKeydown(inputElement, event) {
+      const suggestionBox = inputElement.closest('.custom-dropdown')?.querySelector(".suggestions");
+      if (!suggestionBox || suggestionBox.style.display === 'none') return;
+
+      // Important: Get only VISIBLE items for navigation
+      const visibleItems = Array.from(suggestionBox.querySelectorAll("li:not([style*='display: none'])"));
+      if (visibleItems.length === 0) return;
+
+      let focusedIndex = visibleItems.findIndex(item => item.classList.contains('highlight'));
+
+      switch (event.key) {
+        case 'ArrowUp':
+          event.preventDefault();
+          focusedIndex = (focusedIndex <= 0) ? visibleItems.length - 1 : focusedIndex - 1;
+          highlightDropdownItem(visibleItems, focusedIndex);
+          break;
+        case 'ArrowDown':
+          event.preventDefault();
+          focusedIndex = (focusedIndex < 0 || focusedIndex >= visibleItems.length - 1) ? 0 : focusedIndex + 1;
+          highlightDropdownItem(visibleItems, focusedIndex);
+          break;
+        case 'Enter':
+        case 'Tab':
+          if (focusedIndex >= 0 && focusedIndex < visibleItems.length) {
+            event.preventDefault();
+            selectDropdownItem(inputElement, visibleItems[focusedIndex]);
+            hideDropdownSuggestions(inputElement); // Hide after selection
+          } else if (event.key === 'Enter') {
+              // If Enter is pressed but no item is highlighted, just close the dropdown
+              event.preventDefault();
+              hideDropdownSuggestions(inputElement);
+              inputElement.blur(); // Optionally blur the input
+          }
+          // Allow Tab to function normally if no item is selected
+          break;
+        case 'Escape':
+          event.preventDefault();
+          hideDropdownSuggestions(inputElement);
+          break;
+      }
+    }
+
+    /** Highlights a specific item in the VISIBLE list. */
+    function highlightDropdownItem(visibleItems, index) {
+      // First remove highlight from ALL items (including hidden ones)
+      const suggestionBox = visibleItems[0]?.closest('.suggestions');
+      if(suggestionBox) {
+        suggestionBox.querySelectorAll("li").forEach(item => item.classList.remove("highlight"));
+      }
+      // Then add highlight to the target visible item
+      if (index >= 0 && index < visibleItems.length) {
+        visibleItems[index].classList.add("highlight");
+        visibleItems[index].scrollIntoView({ block: 'nearest' });
+      }
+    }
+
+    /** Updates input value and title when an item is selected. */
+    function selectDropdownItem(inputElement, selectedLi) {
+      inputElement.value = selectedLi.textContent.trim();
+      inputElement.title = inputElement.value;
+      adjustInputWidth(inputElement);
+      // Trigger blur manually AFTER selection to ensure state is saved
+      // handleInlineFieldBlur({ target: inputElement }); // Already called in click handler, potentially redundant here but safe
+    }
+
+    /** Hides the suggestions dropdown. */
+    function hideDropdownSuggestions(inputElement) {
+      const suggestionBox = inputElement.closest('.custom-dropdown')?.querySelector(".suggestions");
+      if (suggestionBox) {
+        suggestionBox.style.display = "none";
+        // Optionally reset highlight on hide
+        const items = Array.from(suggestionBox.querySelectorAll("li"));
+        highlightDropdownItem(items, -1); // Highlight none
+      }
+    }
+
+    /** Handles blur event for dropdown input, hiding suggestions with a delay. */
     function processDropdownBlur(inputElement) {
+      // Use setTimeout to allow click events on suggestions to register before hiding
       setTimeout(() => {
-        const dropdownContainer = inputElement.closest('.custom-dropdown'); // Find container
-        // Check if the currently focused element is the input itself or inside the suggestions
+        const dropdownContainer = inputElement.closest('.custom-dropdown');
         const suggestionBox = dropdownContainer?.querySelector('.suggestions');
+        // Check if the focus has moved to an element *within* the suggestion box
         const activeElement = document.activeElement;
-        const isFocusInside = dropdownContainer && dropdownContainer.contains(activeElement);
-        // If focus moved outside the dropdown completely, hide it
-        if (!isFocusInside) {
+        const isFocusInsideSuggestions = suggestionBox && suggestionBox.contains(activeElement);
+
+        // If focus is not inside the suggestions box, hide it
+        if (!isFocusInsideSuggestions) {
           hideDropdownSuggestions(inputElement);
         }
-      }, 150);
+        // The main blur handler (handleInlineFieldBlur) will save the value
+      }, 150); // Delay ms
     }
 
 
     // --- Final Text Generation --- (generateBtn handler, generateFinalText - unchanged)
     document.getElementById("generateBtn").addEventListener("click", () => { const finalTextArea = document.getElementById("finalText"); const changesDetected = storeAllInlineValues(); if (changesDetected) { saveState(); console.log("Values updated."); } const generatedText = generateFinalText(); const currentText = finalTextArea.value.trim(); if (currentText && currentText !== generatedText.trim()) { showConfirmationModal("Generate", "Override current narrative?", "", () => { finalTextArea.value = generatedText; }, () => { }); } else { finalTextArea.value = generatedText; } });
     function generateFinalText() {
-      console.log("Generating final text..."); const includeSectionTitles = document.getElementById("toggleSectionTitles").checked; let finalOutput = ""; dchartSections.forEach(section => {
+      console.log("Generating final text..."); const includeSectionTitles = document.getElementById("toggleSectionTitles").checked; let finalOutput = ""; narrativeSections.forEach(section => {
         let sectionText = ""; let sectionHasContent = false; if (!section.sentences) return; section.sentences.forEach(sentenceObj => {
           let currentSentenceText = "";
           if (sentenceObj.tabs?.length) { const activeTab = sentenceObj.tabs[sentenceObj.activeTabIndex]; if (!activeTab) return; const tabValues = sentenceObj.tabValues[sentenceObj.activeTabIndex] || {}; currentSentenceText = (activeTab.text || "").replace(placeholderRegex, (match, type, label) => (tabValues[label] || "").trim() || `[${label}]`); }
@@ -1002,7 +1139,7 @@
     }
 
     // --- Utility Functions --- (findSentenceById - unchanged)
-    function findSentenceById(id) { for (const sec of dchartSections) { if (!sec.sentences) continue; const sentence = sec.sentences.find(s => s.id === id); if (sentence) return sentence; } console.warn(`Sentence ID ${id} not found.`); return null; }
+    function findSentenceById(id) { for (const sec of narrativeSections) { if (!sec.sentences) continue; const sentence = sec.sentences.find(s => s.id === id); if (sentence) return sentence; } console.warn(`Sentence ID ${id} not found.`); return null; }
 
     // --- Button Event Listeners --- (copyBtn, newRunBtn, toggleSectionTitles - unchanged)
     document.getElementById("copyBtn").addEventListener("click", () => { const finalTextArea = document.getElementById("finalText"); const textToCopy = finalTextArea.value.trim(); if (!textToCopy) { showConfirmationModal("Copy", "Nothing to copy!", "", () => { }, () => { }, true); return; } navigator.clipboard.writeText(textToCopy).then(() => { console.log("Copied."); showConfirmationModal("Copied", "Copied!<br><br>Start new run?", "Clears work.", () => resetToCurrentConfigDefaults(), () => { }); }).catch(err => { console.error("Copy failed: ", err); showConfirmationModal("Copy Failed", "Could not copy.", "", () => { }, () => { }, true); }); });
