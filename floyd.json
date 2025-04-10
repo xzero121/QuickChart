@@ -21,7 +21,23 @@
       "*Medic 12", 
       "*Medic 13", 
       "*Medic 14", 
-      "*Medic 15"],
+      "*Medic 15"
+    ],
+    "Provider": [
+      "*G. Linker, Paramedic",
+      "*T. Spalding, Paramedic",
+      "*J. Harrison, Paramedic",
+      "*C. Lefebvre, Paramedic",
+      "*V. Lemmel, Paramedic",
+      "*M. Powers, Paramedic",
+      "*L. Kleinhouse, EMT-A",
+      "*B. Brown, EMT-B",
+      "*C. Hawkins, EMT-B,",
+      "*C. Tate, EMT-B",
+      "*A. VanTassel, EMT-B",
+      "*R. Dobbins, EMT-B",
+      "*T. Anderson, EMT-B"
+    ],
     "Gender": ["Male", "Female"],
     "Response Type": ["emergent", "non-emergent"],
     "Hospitalized / Evaluated": ["hospitalized", "evaluated"],
@@ -98,9 +114,11 @@
     ],
     "Reason not Signed": ["altered mental status", "language barrier", "being unconscious", "being blind", "being a minor"]
   },
-  "dchartSections": [
+  "narrativeSections": [
     {
       "part": "D",
+      "subpart": "ispatch:",
+      "tooltip": "Dispatch and arrival information.",
       "includeTitle": true,
       "sentences": [
         {
@@ -128,6 +146,8 @@
     },
     {
       "part": "C",
+      "subpart": "hief Complaint:",
+      "tooltip": "Chief complaint at the time of EMS transport.",
       "includeTitle": true,
       "sentences": [
         {
@@ -146,6 +166,8 @@
     },
     {
       "part": "H",
+      "subpart": "istory of Present Illness:",
+      "tooltip": "History of present illness, including any pertinent medical history.",
       "includeTitle": true,
       "sentences": [
         {
@@ -158,6 +180,8 @@
     },
     {
       "part": "A",
+      "subpart": "ssessment:",
+      "tooltip": "Assessment of the patient’s condition.",
       "includeTitle": true,
       "sentences": [
         {
@@ -167,15 +191,17 @@
           "text": "Primary assessment findings, documented in the treatment tab, revealed [text:Assessment Status]."
         },
         {
-          "text": "Advanced Life Support (ALS) assessment was performed by [text:Provider]."
+          "text": "Advanced Life Support (ALS) assessment was performed by [customDropdown:Provider]."
         },
         {
-          "text": "Basic Life Support (BLS) assessments were conducted by [text:Provider]."
+          "text": "Basic Life Support (BLS) assessments were conducted by [customDropdown:Provider]."
         }
       ]
     },
     {
       "part": "R",
+      "subpart": "eassessment:",
+      "tooltip": "Reassessment of the patient’s condition and any interventions performed.",
       "includeTitle": true,
       "sentences": [
         {
@@ -200,6 +226,8 @@
     },
     {
       "part": "T",
+      "subpart": "ransport:",
+      "tooltip": "Transport information, including the method of transport and any complications.",
       "includeTitle": true,
       "sentences": [
         {
@@ -239,6 +267,8 @@
     },
     {
       "part": "M",
+      "subpart": "edical Necessity:",
+      "tooltip": "Medical necessity for ambulance transport, including the reason for transport and the receiving facility.",
       "includeTitle": true,
       "sentences": [
         {

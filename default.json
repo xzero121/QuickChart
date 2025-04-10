@@ -21,7 +21,8 @@
       "*Medic 12", 
       "*Medic 13", 
       "*Medic 14", 
-      "*Medic 15"],
+      "*Medic 15"
+    ],
     "Gender": ["Male", "Female"],
     "Response Type": ["emergent", "non-emergent"],
     "Hospitalized / Evaluated": ["hospitalized", "evaluated"],
@@ -65,9 +66,11 @@
     ],
     "Reason not Signed": ["altered mental status", "language barrier", "being unconscious", "being blind", "being a minor"]
   },
-  "dchartSections": [
+  "narrativeSections": [
     {
       "part": "D",
+      "subpart": "ispatch:",
+      "tooltip": "Dispatch and arrival information.",
       "includeTitle": true,
       "sentences": [
         {
@@ -95,6 +98,8 @@
     },
     {
       "part": "C",
+      "subpart": "hief Complaint:",
+      "tooltip": "Chief complaint at the time of EMS transport.",
       "includeTitle": true,
       "sentences": [
         {
@@ -113,6 +118,8 @@
     },
     {
       "part": "H",
+      "subpart": "istory of Present Illness:",
+      "tooltip": "History of present illness, including any pertinent medical history.",
       "includeTitle": true,
       "sentences": [
         {
@@ -125,6 +132,8 @@
     },
     {
       "part": "A",
+      "subpart": "ssessment:",
+      "tooltip": "Assessment of the patient’s condition.",
       "includeTitle": true,
       "sentences": [
         {
@@ -143,6 +152,8 @@
     },
     {
       "part": "R",
+      "subpart": "eassessment:",
+      "tooltip": "Reassessment of the patient’s condition and any interventions performed.",
       "includeTitle": true,
       "sentences": [
         {
@@ -167,6 +178,8 @@
     },
     {
       "part": "T",
+      "subpart": "ransport:",
+      "tooltip": "Transport information, including the method of transport and any complications.",
       "includeTitle": true,
       "sentences": [
         {
@@ -206,6 +219,8 @@
     },
     {
       "part": "M",
+      "subpart": "edical Necessity:",
+      "tooltip": "Medical necessity for ambulance transport, including the reason for transport and the receiving facility.",
       "includeTitle": true,
       "sentences": [
         {
@@ -236,6 +251,7 @@
     },
     {
       "part": "Sign Off",
+      "tooltip": "Sign off information, including the provider's name and signature.",
       "includeTitle": false,
       "sentences": [
         {

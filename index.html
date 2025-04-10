@@ -82,6 +82,23 @@
       font-weight: 600;
     }
 
+    .section-header .section-title-main {
+      /* Style for the main 'part' if needed */
+    }
+
+    .section-header .section-subpart {
+      font-size: 0.85em; /* Slightly smaller */
+      color: #6c757d;  /* Slightly lighter (Bootstrap's text-muted color) */
+      margin-left: 0.25em; /* Small space between part and subpart */
+      font-weight: normal; /* Ensure it's not bold if the main part is */
+    }
+
+    /* Ensure tooltip triggers are easily hoverable */
+    .section-title-wrapper[data-bs-toggle="tooltip"] {
+      cursor: help; /* Indicate hover interaction */
+      display: inline-block; /* Ensure wrapper fits content */
+    }
+
     .sentence-list {
       list-style: none;
       padding-left: 0;
@@ -316,7 +333,7 @@
     }
 
     li.has-tabs:first-child {
-      margin-top: 0;
+      margin-top: 1.6rem;
     }
 
     .tabs-container {
@@ -509,6 +526,18 @@
     // --- Initialization ---
     document.addEventListener("DOMContentLoaded", initializeApp);
 
+    function initializeTooltips() {
+  const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+  tooltipTriggerList.map(function (tooltipTriggerEl) {
+    // Check if it already has a tooltip instance to avoid duplicates
+    if (!bootstrap.Tooltip.getInstance(tooltipTriggerEl)) {
+      return new bootstrap.Tooltip(tooltipTriggerEl);
+    }
+    return null; // Return null or the existing instance if you need it
+  });
+  console.log("Tooltips initialized.");
+}
+
     async function initializeApp() {
       console.log("Initializing QuickChart...");
       widthMeasurerSpan = document.getElementById('width-measurer');
@@ -526,6 +555,7 @@
 
         // Build UI based on potentially saved state (or defaults if no save)
         buildSectionsUI();
+        initializeTooltips();
         attachInputSizingListeners();
         attachBlurListeners();
         attachDropdownLogic(); // Includes new input listener attachment
@@ -737,13 +767,56 @@
       // Listeners attached separately
     }
     function createSectionElement(secObj) {
-      const sectionDiv = document.createElement("div"); sectionDiv.classList.add("narrative-section"); sectionDiv.dataset.part = secObj.part;
-      const header = document.createElement("div"); header.classList.add("section-header"); const titleEl = document.createElement("h5");
-      titleEl.classList.add("section-title", "m-0"); titleEl.innerText = secObj.part; header.appendChild(titleEl); sectionDiv.appendChild(header);
-      const ul = document.createElement("ul"); ul.classList.add("sentence-list"); ul.dataset.part = secObj.part;
-      if (secObj.sentences) secObj.sentences.forEach(sentenceObj => ul.appendChild(createSentenceElement(sentenceObj, secObj.part)));
-      sectionDiv.appendChild(ul); sectionDiv.appendChild(createAddSentenceForm(secObj)); return sectionDiv;
+    const sectionDiv = document.createElement("div");
+    sectionDiv.classList.add("narrative-section");
+    sectionDiv.dataset.part = secObj.part;
+
+    const header = document.createElement("div");
+    header.classList.add("section-header");
+
+    // --- START MODIFICATION ---
+    const titleWrapper = document.createElement("span"); // Wrapper for tooltip
+    titleWrapper.classList.add("section-title-wrapper");
+
+    const titleEl = document.createElement("h5"); // Use h5 for the main part
+    titleEl.classList.add("section-title", "m-0", "d-inline"); // Use d-inline to keep spans together
+
+    const mainPartSpan = document.createElement("span");
+    mainPartSpan.classList.add("section-title-main");
+    mainPartSpan.innerText = secObj.part;
+    titleEl.appendChild(mainPartSpan);
+
+    // Add subpart if it exists
+    if (secObj.subpart) {
+        const subPartSpan = document.createElement("span");
+        subPartSpan.classList.add("section-subpart");
+        subPartSpan.innerText = secObj.subpart;
+        titleEl.appendChild(subPartSpan); // Append subpart within the h5
     }
+
+    titleWrapper.appendChild(titleEl); // Add the h5 (with part/subpart) to the wrapper
+
+    // Add Bootstrap tooltip attributes if tooltip exists
+    if (secObj.tooltip) {
+        titleWrapper.setAttribute('data-bs-toggle', 'tooltip');
+        titleWrapper.setAttribute('data-bs-placement', 'top');
+        titleWrapper.setAttribute('title', secObj.tooltip);
+    }
+
+    header.appendChild(titleWrapper); // Add the wrapper to the header
+    // --- END MODIFICATION ---
+
+    sectionDiv.appendChild(header);
+    const ul = document.createElement("ul");
+    ul.classList.add("sentence-list");
+    ul.dataset.part = secObj.part;
+    if (secObj.sentences) {
+        secObj.sentences.forEach(sentenceObj => ul.appendChild(createSentenceElement(sentenceObj, secObj.part)));
+    }
+    sectionDiv.appendChild(ul);
+    sectionDiv.appendChild(createAddSentenceForm(secObj));
+    return sectionDiv;
+}
     function createSentenceElement(sentenceObj, partLabel) {
       initializeSentenceValues(sentenceObj); const li = document.createElement("li"); li.dataset.id = sentenceObj.id; li.dataset.part = partLabel;
       const handle = document.createElement("span"); handle.classList.add("drag-handle"); handle.innerHTML = "&#9776;"; handle.title = "Drag"; li.appendChild(handle);
