@@ -237,7 +237,7 @@
     .inline-field:focus {
       outline: none;
       border-bottom-color: #0d6efd;
-      border-bottom-width: 2px;
+      border-bottom-width: 1px;
       border-bottom-style: solid;
       overflow: visible;
       text-overflow: clip;
@@ -1161,7 +1161,86 @@
 
 
     // --- Final Text Generation --- (generateBtn handler, generateFinalText - unchanged)
-    document.getElementById("generateBtn").addEventListener("click", () => { const finalTextArea = document.getElementById("finalText"); const changesDetected = storeAllInlineValues(); if (changesDetected) { saveState(); console.log("Values updated."); } const generatedText = generateFinalText(); const currentText = finalTextArea.value.trim(); if (currentText && currentText !== generatedText.trim()) { showConfirmationModal("Generate final narrative", "Are you sure you want to override the current narrative?", "This can not be undone!", () => { finalTextArea.value = generatedText; }, () => { }); } else { finalTextArea.value = generatedText; } });
+    document.getElementById("generateBtn").addEventListener("click", async () => { // Make async for potential confirmation
+    const finalTextArea = document.getElementById("finalText");
+    
+    // First, ensure all inline field changes are captured (existing logic)
+    const changesDetected = storeAllInlineValues(); 
+    if (changesDetected) {
+        saveState();
+        console.log("Inline field values updated before generating.");
+    }
+
+    // --- New Warning Logic Start ---
+    const addTextareas = document.querySelectorAll('.add-item-form textarea.auto-height-textarea');
+    let pendingSentences = []; 
+    
+    // Find all textareas with unadded text
+    addTextareas.forEach(textarea => {
+        const text = textarea.value.trim();
+        if (text) {
+            // Find the section part associated with this textarea
+            const form = textarea.closest('.add-item-form');
+            const part = form?.dataset.part;
+            if (part) {
+                // Get a more readable section title if possible
+                const sectionElement = document.querySelector(`.narrative-section[data-part="${part}"]`);
+                const sectionTitle = sectionElement?.querySelector('.section-title-main')?.innerText || part; 
+                
+                pendingSentences.push({ textarea, part, sectionTitle, text });
+            }
+        }
+    });
+
+    // Process each pending sentence sequentially using await
+    for (const pending of pendingSentences) {
+        await new Promise((resolve) => { // Wait for user confirmation for each
+            showConfirmationModal(
+                "Unadded Sentence", // Modal Title
+                `You left text in the '${pending.sectionTitle}' section but didn't click Add:<br><br><em>"${pending.text}"</em><br><br>Do you want to add this sentence before generating?`, // Modal Message
+                "Choosing 'No' will discard this unadded text.", // Modal Disclaimer
+                () => { // Yes Callback (User wants to add)
+                    console.log(`Adding pending sentence to ${pending.part}: ${pending.text}`);
+                    addSentence(pending.part, { text: pending.text }); // Use existing addSentence function
+                    pending.textarea.value = ""; // Clear the textarea
+                    adjustTextareaHeight(pending.textarea); // Adjust height after clearing
+                    resolve(); // Continue to next pending sentence or final generation
+                },
+                () => { // No Callback (User does not want to add)
+                    console.log(`Discarding pending sentence from ${pending.part}.`);
+                    pending.textarea.value = ""; // Clear the textarea (discarding text)
+                    adjustTextareaHeight(pending.textarea); // Adjust height
+                    resolve(); // Continue to next pending sentence or final generation
+                }
+            );
+        });
+    }
+    // --- New Warning Logic End ---
+
+    // --- Original Generation Logic (runs after handling all pending sentences) ---
+    console.log("Proceeding to generate final text...");
+    const generatedText = generateFinalText();
+    const currentText = finalTextArea.value.trim();
+
+    // Ask for confirmation only if overwriting existing *generated* text
+    if (currentText && currentText !== generatedText.trim()) {
+        showConfirmationModal(
+            "Overwrite Narrative?", // Title
+            "Generating will overwrite the current Final Narrative.<br /><br /> Do you want to continue?", // Message
+            "This cannot be undone.", // Disclaimer
+             () => { // Yes callback
+                 finalTextArea.value = generatedText; // Overwrite
+                 console.log("Final text generated and displayed.");
+             }, 
+             () => { // No callback
+                 console.log("Narrative generation cancelled by user.");
+             }
+        );
+    } else {
+        finalTextArea.value = generatedText; // Populate if empty or unchanged
+        console.log("Final text generated and displayed.");
+    }
+});
     function generateFinalText() {
       console.log("Generating final text..."); const includeSectionTitles = document.getElementById("toggleSectionTitles").checked; let finalOutput = ""; narrativeSections.forEach(section => {
         let sectionText = ""; let sectionHasContent = false; if (!section.sentences) return; section.sentences.forEach(sentenceObj => {
