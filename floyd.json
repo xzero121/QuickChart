@@ -7,22 +7,38 @@
   ],
   "globalDropdownOptions": {
     "Unit #": [
-      "Medic 1", 
-      "Medic 2", 
-      "Medic 3", 
-      "Medic 4", 
       "Medic 5", 
-      "Medic 6",
-      "Medic 7", 
-      "Medic 8", 
-      "Medic 9", 
-      "Medic 10", 
-      "Medic 11", 
-      "Medic 12", 
-      "Medic 13", 
-      "Medic 14", 
-      "Medic 15",
-      "Medic 16"
+      "Medic 16", 
+      "*Medic 1", 
+      "*Medic 2", 
+      "*Medic 3", 
+      "*Medic 4", 
+      "*Medic 6",
+      "*Medic 7", 
+      "*Medic 8", 
+      "*Medic 9", 
+      "*Medic 10", 
+      "*Medic 11", 
+      "*Medic 12", 
+      "*Medic 13", 
+      "*Medic 14", 
+      "*Medic 15"
+    ],
+    "Provider": [
+      "*G. Linker, Paramedic",
+      "*T. Spalding, Paramedic",
+      "*J. Harrison, Paramedic",
+      "*C. Lefebvre, Paramedic",
+      "*V. Lemmel, Paramedic",
+      "*M. Powers, Paramedic",
+      "*L. Kleinhouse, EMT-A",
+      "*B. Brown, EMT-B",
+      "*C. Hawkins, EMT-B,",
+      "*C. Tate, EMT-B",
+      "*A. VanTassel, EMT-B",
+      "*R. Dobbins, EMT-B",
+      "*T. Anderson, EMT-B",
+      "*S. Park, EMT-B"
     ],
     "Gender": ["Male", "Female"],
     "Response Type": ["emergent", "non-emergent"],
@@ -41,24 +57,58 @@
     "Straps Count": ["x5"],
     "Patient Condition": ["improved", "did not change", "worsened"],
     "Transfer of Location": ["hospital bed", "facility bed"],
-    "Sending Facility": [
-      "Baptist Health Floyd", 
-      "Baptist Freestanding ER in Jeffersonville",
-      "Baptist Health La Grange",
-      "Baptist Health Louisville",
-      "Baptist Health Corbin",
-      "Baptist Health Hardin",
-      "Baptist Health Paducah"
-    ],
+    "Sending Facility": ["Baptist Floyd", "Baptist Freestanding ER in Jeffersonville"],
     "Receiving Facility": [
-      "Baptist Floyd", 
-      "Baptist Health Louisville"
+      "Baptist Health Floyd", 
+      "Baptist Health Louisville",
+      "*Autmnn Woods",
+      "*Bennett Place",
+      "*Charlestown Place",
+      "*Clark Memorial Hospital",
+      "*Corydon Nursing and Rehab",
+      "*Green Valley Care Center",
+      "*Hampton Oaks",
+      "*Harrison Health & Rehab",
+      "*Harrison Springs",
+      "*Hillcrest",
+      "*Indian Creek",
+      "*Lake Pointe Village",
+      "*Lincoln Hills Health Center",
+      "*Meadow View",
+      "*PAM North",
+      "*PAM South",
+      "*River Crossing",
+      "*Riverview Village",
+      "*Rolling Hills",
+      "*St. Vincent Salem",
+      "*Salem Crossing",
+      "*Sellersburg Health and Rehab",
+      "*Silvercrest",
+      "*Todd-Dickey",
+      "*Vivera Senior Loving of Jeffersonville",
+      "*Wedgewood Healthcare Center",
+      "*Westminster Village",
+      "*Waters of Clifty Falls",
+      "*Waters of Georgetown (Guerin Woods)",
+      "*Waters of Scottsburg",
+      "*Wellstone Regional Hospital",
+      "*Brightwell Behavioral Health",
+      "*UofL Health - Hospital",
+      "*UofL Health - Jewish Hospital",
+      "*UofL Health - Mary & Elizabeth Hospital",
+      "*Norton Hospital",
+      "*Norton Audubon Hospital",
+      "*Norton Brownsboro Hospital",
+      "*Norton Women and Childrens' Hospital",
+      "*Norton Children's Hospital",
+      "*Norton Pavilion",
+      "*Kindred Hospital"
     ],
     "Reason": ["higher level of care", "long term care"],
     "Medical Necessity": [
       "1: Patient was bed confined before and after transport",
       "2: Patient required Cardiac / Hemodynamic monitoring during transport",
-      "3: Patient is confused, combatative, lethargic, or comatose",
+      "3: Patient is confused, combative, lethargic, or comatose",
       "4: Patient has contractures",
       "5: Patient is a danger to self or others - requires monitoring",
       "6: Patient has DVT required elevation of lower extremity",
@@ -74,7 +124,7 @@
       "16: Patient requires assistance for administration / regulation of oxygen",
       "17: Patient is unable to maintain seated position for time needed to transport",
       "18: Patient is unable to sit in chair or wheelchair due to decubitus ulcer",
-      "19: Patient requires transfer for higher level of care; First hospital lacks equipment / sercives"
+      "19: Patient requires transfer for higher level of care; First hospital lacks equipment / services"
     ],
     "Reason not Signed": ["altered mental status", "language barrier", "being unconscious", "being blind", "being a minor"]
   },
@@ -122,7 +172,7 @@
             },
             {
               "title": "No Complaint",
-              "text": "The patient had no stated complaint at the time of EMS transport. [text:Additional Info]."
+              "text": "The patient had no stated complaint at the time of EMS transport."
             }
           ]
         }
@@ -155,10 +205,10 @@
           "text": "Primary assessment findings, documented in the treatment tab, revealed [text:Assessment Status]."
         },
         {
-          "text": "Advanced Life Support (ALS) assessment was performed by [text:Provider]."
+          "text": "Advanced Life Support (ALS) assessment was performed by [customDropdown:Provider]."
         },
         {
-          "text": "Basic Life Support (BLS) assessments were conducted by [text:Provider]."
+          "text": "Basic Life Support (BLS) assessments were conducted by [customDropdown:Provider]."
         }
       ]
     },
@@ -263,11 +313,10 @@
     },
     {
       "part": "Sign Off",
-      "tooltip": "Sign off information, including the provider's name and signature.",
       "includeTitle": false,
       "sentences": [
         {
-          "text": "I, [text:Provider], hereby certify that the above findings are accurate and complete to the best of my knowledge."
+          "text": "I, [customDropdown:Provider], hereby certify that the above findings are accurate and complete to the best of my knowledge."
         }
       ]
     }
